@@ -121,6 +121,11 @@ if (EXISTS "${CMAKE_SOURCE_DIR}/cmake/version.txt.in")
     configure_file(${CMAKE_SOURCE_DIR}/cmake/version.txt.in ${CMAKE_BINARY_DIR}/version.txt @ONLY)
 endif()
 
+# Ensure README.md is available in build directory so CPack or custom packaging includes it
+if (EXISTS "${CMAKE_SOURCE_DIR}/README.md")
+    configure_file(${CMAKE_SOURCE_DIR}/README.md ${CMAKE_BINARY_DIR}/README.md COPYONLY)
+endif()
+
 # Put build outputs to a single place
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -140,6 +145,15 @@ endif()
 
 # CPack configuration
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+
+# Disable source package generation to avoid packaging repository source files into release archives
+set(CPACK_SOURCE_ZIP OFF CACHE BOOL "Disable CPack source ZIP generation" FORCE)
+set(CPACK_SOURCE_7Z OFF CACHE BOOL "Disable CPack source 7z generation" FORCE)
+# Ensure source generators list is empty (safe guard)
+set(CPACK_SOURCE_GENERATOR "" CACHE STRING "No source generators" FORCE)
+# Ignore patterns to exclude common source files from any source packaging
+set(CPACK_SOURCE_IGNORE_FILES "/\\.git/;\\.gitignore$;\\.gitmodules$;\\.gitattributes$;\\.vs/;\\.vscode/;\\.idea/;.*\\.cpp$;.*\\.c$;.*\\.h$;.*\\.hpp$;~$" CACHE STRING "Files to ignore when creating source packages")
+
 include(CPack)
 
 # Helper targets
