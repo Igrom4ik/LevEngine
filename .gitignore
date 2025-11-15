@@ -15,8 +15,6 @@ cmake-build*/
 /bin/
 /x64/
 *.vcxproj.user
-*.suo
-*.user
 *.pdb
 *.obj
 *.o
@@ -72,7 +70,12 @@ PVS-Studio.reports/
 
 # Ignore PVS-Studio temporary/generation files often created near sources
 *.PVS-Studio.*
+**/*.PVS-Studio.*
 App/Source/*.PVS-Studio.i
+
+# Ignore FetchContent/_deps directories created by CMake
+_deps/
+cmake-build*/_deps/
 
 # Keep EngineConfig.h tracked
 EngineConfig.h
