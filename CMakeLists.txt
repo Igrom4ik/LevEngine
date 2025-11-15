@@ -205,7 +205,7 @@ set(CMAKE_SUPPRESS_REGENERATION TRUE)
 
 # Install only runtime artifacts and package metadata (do not install source files)
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
-install(FILES "${CMAKE_SOURCE_DIR}/README.md" DESTINATION .)
+# NOTE: README.md removed from install to avoid bundling project README into release packages
 
 # Optional release overrides
 if (EXISTS "${CMAKE_SOURCE_DIR}/cmake/CPackReleaseConfig.cmake")

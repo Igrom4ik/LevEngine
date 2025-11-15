@@ -99,7 +99,8 @@ jobs:
             return $null
           }
 
-          if (-not (Find-InPackage "README.md")) { Write-Error "README.md missing in package"; exit 1 }
+          # Remove README check: README is no longer installed into packages
+          # if (-not (Find-InPackage "README.md")) { Write-Error "README.md missing in package"; exit 1 }
           if (-not (Find-InPackage "bin")) { Write-Error "bin/ missing in package"; exit 1 }
 
           $src = Get-ChildItem -Path $out -Recurse -Include *.cpp,*.h -ErrorAction SilentlyContinue
