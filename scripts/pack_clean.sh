@@ -13,12 +13,24 @@ rm -f "$ZIPPATH" || true
 STAGING=$(mktemp -d)
 trap 'rm -rf "$STAGING"' EXIT
 
+# Copy bin/lib if present
 cp -r "$INSTALL_DIR/bin" "$STAGING/" 2>/dev/null || true
 cp -r "$INSTALL_DIR/lib" "$STAGING/" 2>/dev/null || true
-if [ -f "$INSTALL_DIR/README.md" ]; then cp "$INSTALL_DIR/README.md" "$STAGING/"; fi
+
+# Compute repository root (script is in scripts/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Copy README: prefer install/README.md, fall back to repo root README.md
+if [ -f "$INSTALL_DIR/README.md" ]; then
+  cp "$INSTALL_DIR/README.md" "$STAGING/"
+elif [ -f "$REPO_ROOT/README.md" ]; then
+  cp "$REPO_ROOT/README.md" "$STAGING/"
+else
+  echo "Warning: README.md not found in install or repo root; package will not contain README." >&2
+fi
 
 ( cd "$STAGING" && zip -r "$ZIPPATH" . )
 
 echo "Created: $ZIPPATH"
 exit 0
-
