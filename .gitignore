@@ -33,6 +33,15 @@ __pycache__/
 # Misc
 *.log
 
+# Logs and CI outputs (added)
+*.out
+*_out.txt
+*-output.txt
+lsremote_out.txt
+push-output.txt
+status_out.txt
+log_out.txt
+cmake-config.log
+
 # Vendor built artifacts (optional)
 vendor/**/build/
-
