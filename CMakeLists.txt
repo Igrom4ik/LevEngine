@@ -171,6 +171,11 @@ set(CMAKE_SUPPRESS_REGENERATION TRUE)
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 install(FILES "${CMAKE_SOURCE_DIR}/README.md" DESTINATION .)
 
+# As a defensive measure, ensure README.md is present under the configured install prefix
+# even if an alternate install invocation or generator changes DESTINATION semantics.
+install(CODE "
+  if(NOT EXISTS \"${CMAKE_INSTALL_PREFIX}/README.md\")\n    file(INSTALL DESTINATION \"${CMAKE_INSTALL_PREFIX}\" FILES \"${CMAKE_SOURCE_DIR}/README.md\")\n  endif()\n")
+
 # Optional release overrides
 if (EXISTS "${CMAKE_SOURCE_DIR}/cmake/CPackReleaseConfig.cmake")
     include("${CMAKE_SOURCE_DIR}/cmake/CPackReleaseConfig.cmake")
@@ -241,20 +246,19 @@ set(CPACK_INSTALLED_DIRECTORIES
     "${CMAKE_INSTALL_PREFIX}/README.md;."
     CACHE STRING "Directories to include in CPack package" FORCE)
 
-# Explicitly set CPACK_SOURCE_IGNORE_FILES with properly escaped backslashes
-# Use double-escaped backslashes so generated CPackConfig.cmake contains valid CMake string literals
+# Explicitly set CPACK_SOURCE_IGNORE_FILES using character class for literal dot to avoid escape issues
 set(CPACK_SOURCE_IGNORE_FILES
-    "/\\\.git/"
-    "/\\\.gitignore$"
-    "/\\\.gitmodules$"
-    "/\\\.gitattributes$"
-    "/\\\.vs/"
-    "/\\\.vscode/"
-    "/\\\.idea/"
-    ".*\\\.cpp$"
-    ".*\\\.c$"
-    ".*\\\.h$"
-    ".*\\\.hpp$"
+    "/[.]git/"
+    "/[.]gitignore$"
+    "/[.]gitmodules$"
+    "/[.]gitattributes$"
+    "/[.]vs/"
+    "/[.]vscode/"
+    "/[.]idea/"
+    ".*[.]cpp$"
+    ".*[.]c$"
+    ".*[.]h$"
+    ".*[.]hpp$"
     "~$"
     CACHE STRING "Files to ignore for CPack source packages" FORCE)
 
