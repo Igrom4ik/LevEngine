@@ -59,7 +59,20 @@ set(CPACK_RESOURCE_FILE_WELCOME "C:/Program Files/CMake/share/cmake-4.1/Template
 set(CPACK_SET_DESTDIR "OFF")
 set(CPACK_SOURCE_7Z "OFF")
 set(CPACK_SOURCE_GENERATOR "")
-set(CPACK_SOURCE_IGNORE_FILES "/\.git/;\.gitignore$;\.gitmodules$;\.gitattributes$;\.vs/;\.vscode/;\.idea/;.*\.cpp$;.*\.c$;.*\.h$;.*\.hpp$;~$")
+set(CPACK_SOURCE_IGNORE_FILES
+    "/\\.git/"
+    "/\\.gitignore$"
+    "/\\.gitmodules$"
+    "/\\.gitattributes$"
+    "/\\.vs/"
+    "/\\.vscode/"
+    "/\\.idea/"
+    ".*\\.cpp$"
+    ".*\\.c$"
+    ".*\\.h$"
+    ".*\\.hpp$"
+    "~$"
+)
 set(CPACK_SOURCE_OUTPUT_CONFIG_FILE "C:/DEVOPS/LevEngine/cmake-ci/CPackSourceConfig.cmake")
 set(CPACK_SOURCE_ZIP "OFF")
 set(CPACK_SYSTEM_NAME "win64")
