@@ -19,7 +19,8 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ninja-build cmake zip unzip || true
+          sudo apt-get install -y --no-install-recommends ninja-build cmake zip unzip wayland-protocols || true
+        shell: bash
 
       - name: Setup tools (Windows)
         if: runner.os == 'Windows'
