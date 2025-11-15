@@ -80,10 +80,26 @@ jobs:
         shell: bash
         run: cmake --install build --config Release --prefix ${{ github.workspace }}/staging
 
+      - name: List staging (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          echo "Staging listing:"
+          ls -la "${{ github.workspace }}/staging" || true
+          echo "Staging recursive (up to depth 3):"
+          find "${{ github.workspace }}/staging" -maxdepth 3 -type f -print || true
+
       - name: Install into staging (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: cmake --install build --config Release --prefix "$env:GITHUB_WORKSPACE\staging"
+
+      - name: List staging (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Write-Host "Staging listing:"
+          Get-ChildItem -Path "$env:GITHUB_WORKSPACE\staging" -Recurse -Force -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
 
       - name: Run packaging (CPack) (Linux)
         if: matrix.os == 'ubuntu-latest'
