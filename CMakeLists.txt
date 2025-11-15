@@ -121,7 +121,7 @@ if (EXISTS "${CMAKE_SOURCE_DIR}/cmake/version.txt.in")
     configure_file(${CMAKE_SOURCE_DIR}/cmake/version.txt.in ${CMAKE_BINARY_DIR}/version.txt @ONLY)
 endif()
 
-# Put build outputs to a single place (simple, predictable)
+# Put build outputs to a single place
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
@@ -129,41 +129,30 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_SUPPRESS_REGENERATION TRUE)
 
-# Ensure no source files (*.cpp, *.h) are included in the package
-# Avoid using install(DIRECTORY ...) that picks up sources
-
-# Install the main executable so CPack can package it
+# Install only runtime artifacts and package metadata (do not install source files)
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
-
-# Install README so packages include project README at top-level
 install(FILES "${CMAKE_SOURCE_DIR}/README.md" DESTINATION .)
 
-# Explicitly install only necessary runtime/data files
-# Add other runtime/data files as needed, but exclude source files
-
-# Load release-specific CPack defaults if present
+# Optional release overrides
 if (EXISTS "${CMAKE_SOURCE_DIR}/cmake/CPackReleaseConfig.cmake")
     include("${CMAKE_SOURCE_DIR}/cmake/CPackReleaseConfig.cmake")
 endif()
 
-# Ensure CPack module is loaded (generates 'package' target)
-# Disable wrapping files into a top-level directory inside the ZIP so README.md appears at archive root
+# CPack configuration
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 include(CPack)
 
-# Helper target: build, install into CMAKE_INSTALL_PREFIX and then run package
+# Helper targets
 add_custom_target(package-release
-        COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target install
-        COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target package
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-        COMMENT "Build Release, install to ${CMAKE_INSTALL_PREFIX} and create release ZIP via CPack")
+    COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target install
+    COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target package
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+    COMMENT "Build, install and create release ZIP via CPack")
 
-# Helper target to print current configured version
 add_custom_target(print-version
-        COMMAND ${CMAKE_COMMAND} -E echo "LevEngine version: ${PROJECT_VERSION}"
-        COMMENT "Print configured LevEngine version")
+    COMMAND ${CMAKE_COMMAND} -E echo "LevEngine version: ${PROJECT_VERSION}"
+    COMMENT "Print configured LevEngine version")
 
-# Shortcut help target
 add_custom_target(package-release-help
-        COMMAND ${CMAKE_COMMAND} -E echo "Run: cmake --build <build-dir> --target package-release --config Release"
-        COMMENT "Show how to run package-release target")
+    COMMAND ${CMAKE_COMMAND} -E echo "Run: cmake --build <build-dir> --target package-release --config Release"
+    COMMENT "Show how to run package-release target")

@@ -40,11 +40,11 @@ jobs:
 
       - name: Configure CMake (Debug)
         if: matrix.configuration == 'Debug'
-        run: cmake --preset ninja-debug -- -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+        run: cmake --preset ninja-debug -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 
       - name: Configure CMake (Release)
         if: matrix.configuration == 'Release'
-        run: cmake --preset ninja-release -- -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+        run: cmake --preset ninja-release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 
       - name: Build (Debug)
         if: matrix.configuration == 'Debug'
