@@ -215,8 +215,20 @@ if(NOT DEFINED CPACK_INSTALL_PREFIX OR "${CPACK_INSTALL_PREFIX}" STREQUAL "")
   set(CPACK_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 endif()
 
-install(CODE "
-  if(NOT EXISTS \"${CPACK_INSTALL_PREFIX}/README.md\")\n    file(INSTALL DESTINATION \"${CPACK_INSTALL_PREFIX}\" FILES \"${CMAKE_SOURCE_DIR}/README.md\")\n  endif()\n")
+# Normalize source directory path to a Unix-style path (forward slashes) for substitution
+file(TO_CMAKE_PATH "${CMAKE_SOURCE_DIR}" _tmp_src)
+string(REPLACE "\\" "/" SRC_UNIX "${_tmp_src}")
+
+# Generate a small CMake script that will copy README.md into the CPACK install prefix
+# Expand both @VAR@ and ${VAR} so that @{SRC}@ and ${CPACK_INSTALL_PREFIX} are substituted at configure time.
+# Use a single configure_file invocation after preparing SRC.
+set(SRC "${SRC_UNIX}")
+configure_file(
+  "${CMAKE_SOURCE_DIR}/cmake/copy_readme.cmake.in"
+  "${CMAKE_BINARY_DIR}/copy_readme.cmake"
+)
+
+install(CODE "include(\"${CMAKE_BINARY_DIR}/copy_readme.cmake\")")
 
 # Optional release overrides
 if (EXISTS "${CMAKE_SOURCE_DIR}/cmake/CPackReleaseConfig.cmake")
