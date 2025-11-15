@@ -144,12 +144,29 @@ jobs:
         run: |
           ZIP=$(ls build/*.zip 2>/dev/null || ls build/package/*.zip 2>/dev/null || true)
           if [ -z "$ZIP" ]; then echo "ZIP not found"; exit 1; fi
-          # List only file names (no size/columns) to make filename checks robust across unzip output formats
-          unzip -l "$ZIP" | awk '{print $NF}' > contents.txt
+
+          # ===== FIX: Skip header/footer from unzip -l output =====
+          # unzip -l format:
+          #   Archive:  build/LevEngine-1.0.0-Linux.zip
+          #     Length      Date    Time    Name
+          #   ---------  ---------- -----   ----
+          #        0  2025-11-15 14:02   bin/
+          #     1234  2025-11-15 14:02   bin/LevEngine
+          #        0  2025-11-15 14:02   README.md
+          #   ---------                     -------
+          #     1234                     3 files
+          #
+          # We need only the "Name" column (lines between the two ----- separators).
+          # tail -n +4: skip first 3 lines (Archive:, Length/Date/Time/Name header, first ----)
+          # head -n -2: remove last 2 lines (final ----, "X files" summary)
+          unzip -l "$ZIP" | tail -n +4 | head -n -2 | awk '{print $NF}' | sed 's/\r$//' | grep -v '^$' > contents.txt
+
           echo "Archive listing (names only):"
           cat contents.txt
-          grep -q -E '(^|/)(README.md)$' contents.txt || (echo "README.md not found in archive" && exit 1)
+
+          grep -q -E '(^|/)(README\.md)$' contents.txt || (echo "README.md not found in archive" && exit 1)
           grep -q -E '(^|/)(bin/)' contents.txt || (echo "bin/ not found in archive" && exit 1)
+
           # Fail if any *.cpp or *.h exist in archive listing
           if grep -Ei '\.cpp$|\.h$' contents.txt; then
             echo "Source files (*.cpp or *.h) found in archive"; exit 1
