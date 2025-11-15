@@ -19,23 +19,10 @@ jobs:
         uses: actions/checkout@v4
 
       # Install dependencies required before Configure step
-      - name: Install wayland-scanner (Linux only)
+      - name: Install wayland-dev (Linux only)
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y wayland-scanner
+        run: sudo apt-get update && sudo apt-get install -y wayland-dev
         shell: bash
-
-      - name: Install NSIS (Windows only)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          # Use Chocolatey to install nsis on Windows runners
-          choco install nsis -y
-
-      - name: Verify NSIS installation (Windows only)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          makensis /VERSION
 
       - name: Set version (from tag if present)
         id: set_version
@@ -54,10 +41,10 @@ jobs:
         run: |
           if [ -n "${{ steps.set_version.outputs.version }}" ]; then
             echo "Configuring with version ${{ steps.set_version.outputs.version }}"
-            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DHuyEngine_VERSION=${{ steps.set_version.outputs.version }} -DCPACK_PACKAGE_VERSION=${{ steps.set_version.outputs.version }} -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/staging
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DHuyEngine_VERSION=${{ steps.set_version.outputs.version }} -DCPACK_PACKAGE_VERSION=${{ steps.set_version.outputs.version }} -DCPACK_GENERATOR=ZIP -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/staging
           else
             echo "Configuring without explicit version (use project() default)"
-            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/staging
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR=ZIP -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/staging
           fi
         shell: bash
 
