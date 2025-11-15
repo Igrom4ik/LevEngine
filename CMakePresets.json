@@ -1,0 +1,61 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 31,
+    "patch": 6
+  },
+  "configurePresets": [
+    {
+      "name": "ninja-debug",
+      "displayName": "Ninja Debug",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/cmake-build-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "LEVENGINE_FETCH_THIRDPARTY": "ON",
+        "LEVENGINE_USE_SUBMODULES": "OFF"
+      }
+    },
+    {
+      "name": "ninja-release",
+      "displayName": "Ninja Release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/cmake-build-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "LEVENGINE_FETCH_THIRDPARTY": "ON",
+        "LEVENGINE_USE_SUBMODULES": "OFF"
+      }
+    },
+    {
+      "name": "vs-debug",
+      "displayName": "Visual Studio Debug",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/cmake-build-vs-debug",
+      "cacheVariables": {
+        "CMAKE_GENERATOR_TOOLSET": "v142",
+        "LEVENGINE_FETCH_THIRDPARTY": "ON",
+        "LEVENGINE_USE_SUBMODULES": "OFF"
+      }
+    },
+    {
+      "name": "vs-release",
+      "displayName": "Visual Studio Release",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/cmake-build-vs-release",
+      "cacheVariables": {
+        "CMAKE_GENERATOR_TOOLSET": "v142",
+        "CMAKE_BUILD_TYPE": "Release",
+        "LEVENGINE_FETCH_THIRDPARTY": "ON",
+        "LEVENGINE_USE_SUBMODULES": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "ninja-debug", "configurePreset": "ninja-debug" },
+    { "name": "ninja-release", "configurePreset": "ninja-release" },
+    { "name": "vs-debug", "configurePreset": "vs-debug" },
+    { "name": "vs-release", "configurePreset": "vs-release" }
+  ]
+}

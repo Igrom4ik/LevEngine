@@ -1,0 +1,38 @@
+# Build artifacts
+cmake-build*/
+cmake-build-*/
+Debug/
+Release/
+bin/
+lib/
+*.obj
+*.o
+*.exe
+*.pdb
+
+# CMake files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+build/
+
+# Visual Studio
+*.vcxproj*
+*.sln
+.vs/
+
+# IDE
+.idea/
+.vscode/
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Misc
+*.log
+
+# Vendor built artifacts (optional)
+vendor/**/build/
+
