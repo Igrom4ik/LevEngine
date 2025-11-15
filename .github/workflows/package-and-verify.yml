@@ -144,8 +144,9 @@ jobs:
         run: |
           ZIP=$(ls build/*.zip 2>/dev/null || ls build/package/*.zip 2>/dev/null || true)
           if [ -z "$ZIP" ]; then echo "ZIP not found"; exit 1; fi
-          unzip -l "$ZIP" > contents.txt
-          echo "Archive listing:"
+          # List only file names (no size/columns) to make filename checks robust across unzip output formats
+          unzip -l "$ZIP" | awk '{print $NF}' > contents.txt
+          echo "Archive listing (names only):"
           cat contents.txt
           grep -q -E '(^|/)(README.md)$' contents.txt || (echo "README.md not found in archive" && exit 1)
           grep -q -E '(^|/)(bin/)' contents.txt || (echo "bin/ not found in archive" && exit 1)
