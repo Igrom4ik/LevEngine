@@ -14,12 +14,32 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # ensure submodules are fetched (if project uses them) and full history for tags
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Init submodules (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          git submodule sync --recursive || true
+          git submodule update --init --recursive || true
+
+      - name: Init submodules (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          git submodule sync --recursive || true
+          git submodule update --init --recursive || true
 
       - name: Setup tools (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ninja-build cmake zip unzip wayland-protocols || true
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build cmake zip unzip wayland-protocols \
+            libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev || true
         shell: bash
 
       - name: Setup tools (Windows)
@@ -28,7 +48,14 @@ jobs:
           choco install -y ninja cmake zip || true
 
       - name: Configure (CMake)
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DGLFW_BUILD_WAYLAND=OFF
+        run: |
+          # Prefer using bundled vendor/glfw-3.4 if present to avoid missing submodule issues
+          EXTRA_FLAGS=""
+          if [ -d "${{ github.workspace }}/vendor/glfw-3.4" ]; then
+            echo "Found vendor/glfw-3.4, using it instead of fetching: setting -Dglfw_SOURCE_DIR"
+            EXTRA_FLAGS="-Dglfw_SOURCE_DIR=${{ github.workspace }}/vendor/glfw-3.4"
+          fi
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DGLFW_BUILD_WAYLAND=OFF ${EXTRA_FLAGS}
 
       - name: Build
         run: cmake --build build --config Release -- -j 2

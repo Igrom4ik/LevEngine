@@ -214,7 +214,21 @@ set(CPACK_SOURCE_7Z OFF CACHE BOOL "Disable CPack source 7z generation" FORCE)
 # Ensure source generators list is empty (safe guard)
 set(CPACK_SOURCE_GENERATOR "" CACHE STRING "No source generators" FORCE)
 # Ignore patterns to exclude common source files from any source packaging
-set(CPACK_SOURCE_IGNORE_FILES "/\\.git/;\\.gitignore$;\\.gitmodules$;\\.gitattributes$;\\.vs/;\\.vscode/;\\.idea/;.*\\.cpp$;.*\\.c$;.*\\.h$;.*\\.hpp$;~$" CACHE STRING "Files to ignore when creating source packages")
+# Use CMake list of patterns and double-escape dots (\\.) for regex literals.
+set(CPACK_SOURCE_IGNORE_FILES
+    "/\\.git/"
+    "/\\.gitignore$"
+    "/\\.gitmodules$"
+    "/\\.gitattributes$"
+    "/\\.vs/"
+    "/\\.vscode/"
+    "/\\.idea/"
+    ".*\\.cpp$"
+    ".*\\.c$"
+    ".*\\.h$"
+    ".*\\.hpp$"
+    "~$"
+    CACHE STRING "Files to ignore when creating source packages" FORCE)
 
 include(CPack)
 
