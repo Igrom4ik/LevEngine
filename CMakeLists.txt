@@ -223,9 +223,15 @@ string(REPLACE "\\" "/" SRC_UNIX "${_tmp_src}")
 # Expand both @VAR@ and ${VAR} so that @{SRC}@ and ${CPACK_INSTALL_PREFIX} are substituted at configure time.
 # Use a single configure_file invocation after preparing SRC.
 set(SRC "${SRC_UNIX}")
+
+# Also provide a sanitized CPACK_INSTALL_PREFIX for substitution into the @ONLY template
+file(TO_CMAKE_PATH "${CPACK_INSTALL_PREFIX}" _tmp_cpack_prefix)
+string(REPLACE "\\" "/" CPACK_INSTALL_PREFIX_FOR_CONFIG "${_tmp_cpack_prefix}")
+
 configure_file(
   "${CMAKE_SOURCE_DIR}/cmake/copy_readme.cmake.in"
   "${CMAKE_BINARY_DIR}/copy_readme.cmake"
+  @ONLY
 )
 
 install(CODE "include(\"${CMAKE_BINARY_DIR}/copy_readme.cmake\")")
