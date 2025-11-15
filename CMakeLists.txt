@@ -280,16 +280,15 @@ endif()
 # Force CPACK_PACKAGE_FILE_NAME to use resolved values (use resolved_project_version directly to avoid truncation)
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${_resolved_project_version}-${CMAKE_SYSTEM_NAME}" CACHE STRING "CPack output file name" FORCE)
 
-# Ensure CPack packages only the installed runtime artifacts (bin, lib) and README
-# Force this into the cache so that build-time generated CPack files honor it.
-set(CPACK_INSTALLED_DIRECTORIES
-    "${CPACK_INSTALL_PREFIX}/bin;bin"
-    "${CPACK_INSTALL_PREFIX}/lib;lib"
-    # Do not list README.md as a source path (absolute file paths with drive letters
-    # can confuse CPack on Windows). Include the install prefix root so installed
-    # files (including README.md copied by install(FILES ...)) are packaged.
-    "${CPACK_INSTALL_PREFIX};."
-    CACHE STRING "Directories to include in CPack package" FORCE)
+# ## Do not explicitly set CPACK_INSTALLED_DIRECTORIES here. Using an explicit
+# ## absolute path (especially on Windows with drive letters) can confuse CPack
+# ## when it constructs temporary package directories (it may concatenate the
+# ## package path with an absolute install path and produce invalid paths).
+# ##
+# ## Let CPack use the default behavior and the install() rules defined above
+# ## (we already install the runtime target and README into the install prefix).
+# ## If you need custom inclusion, consider using the `pack_clean` scripts or
+# ## set CPACK_INSTALLED_DIRECTORIES in a platform-aware way in CI.
 
 # Explicitly set CPACK_SOURCE_IGNORE_FILES using character class for literal dot to avoid escape issues
 set(CPACK_SOURCE_IGNORE_FILES
