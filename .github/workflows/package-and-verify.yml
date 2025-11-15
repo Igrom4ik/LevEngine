@@ -47,10 +47,10 @@ jobs:
         run: |
           if [ -n "${{ steps.set_version.outputs.version }}" ]; then
             echo "Configuring with version ${{ steps.set_version.outputs.version }}"
-            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPROJECT_VERSION="${{ steps.set_version.outputs.version }}" -DCPACK_PACKAGE_VERSION="${{ steps.set_version.outputs.version }}" -DCPACK_GENERATOR=ZIP -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/staging
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPROJECT_VERSION="${{ steps.set_version.outputs.version }}" -DCPACK_PACKAGE_VERSION="${{ steps.set_version.outputs.version }}" -DCPACK_GENERATOR=ZIP -DGLFW_BUILD_WAYLAND=OFF -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/staging
           else
             echo "Configuring without explicit version (use project() default)"
-            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR=ZIP -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/staging
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR=ZIP -DGLFW_BUILD_WAYLAND=OFF -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/staging
           fi
 
       - name: Configure (Windows)
