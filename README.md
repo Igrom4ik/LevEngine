@@ -1,70 +1,239 @@
 # LevEngine
 
-![status](https://img.shields.io/badge/status-experimental-orange)
-![language](https://img.shields.io/badge/language-C++-00599C)
-![license](https://img.shields.io/badge/license-MIT-blue)
-![third-party](https://img.shields.io/badge/third--party-GLEW%20(BSD)-lightgrey)
+[![Документация: GitHub Copilot](https://img.shields.io/badge/Документация-GitHub%20Copilot-blue?logo=github)](https://github.com/features/copilot)
+[![Windows Build](https://github.com/YOUR_USERNAME/LevEngine/actions/workflows/windows-build.yml/badge.svg)](https://github.com/YOUR_USERNAME/LevEngine/actions/workflows/windows-build.yml)
+[![Linux Build](https://github.com/YOUR_USERNAME/LevEngine/actions/workflows/linux-build.yml/badge.svg)](https://github.com/YOUR_USERNAME/LevEngine/actions/workflows/linux-build.yml)
+[![Clang-format check](https://github.com/YOUR_USERNAME/LevEngine/actions/workflows/clang-format-checker.yml/badge.svg)](https://github.com/YOUR_USERNAME/LevEngine/actions/workflows/clang-format-checker.yml)
 
-<!-- CI status badges -->
-[![Windows Build](https://github.com/Igrom4ik/LevEngine/actions/workflows/windows-build.yml/badge.svg)](https://github.com/Igrom4ik/LevEngine/actions/workflows/windows-build.yml)
-[![clang-format](https://github.com/Igrom4ik/LevEngine/actions/workflows/clang-format-checker.yml/badge.svg)](https://github.com/Igrom4ik/LevEngine/actions/workflows/clang-format-checker.yml)
+Custom Game Engine built with C++ and CMake.
 
-Коротко: LevEngine — это небольшой кроссплатформенный игровой движок на C++ с архитектурой, ориентированной на простоту расширения и интеграцию с современными средствами сборки (CMake, Ninja, Visual Studio). Проект содержит исходный код движка, сборочные сценарии и поставляется с набором сторонних библиотек в папке `vendor/`.
+> 📝 **Документация и дизайн документации созданы благодаря GitHub Copilot**
 
-Основные возможности (текущее состояние):
-- Ядро на C++ (один главный исполняемый файл `main.cpp`).
-- Система сборки на CMake (поддержка генерации проектов для MSVC и Ninja).
-- Включённая поддержка OpenGL через GLEW (в `vendor/glew`).
-- Примеры и тесты — базовые примеры запуска графики и тесты Unicode в `Automation/`.
-- Поддержка мультиплатформенной организации исходников и поставки бинарников (директории `build_vendor/`, `bin/`, `Debug/`).
+## 🚀 Quick Start
 
-Архитектура (кратко):
-- source/ — исходники основного приложения (например, `main.cpp`).
-- vendor/ — сторонние библиотеки и их исходники/билды (например, `glew`, `glfw`).
-- build/ / cmake-build-debug/ / build_vendor/ — директории сборки и артефактов.
-- scripts/ и Automation/ — скрипты сборки, упаковки и автоматизации.
+### Build System v2.0 (Recommended)
 
-Быстрый старт (Windows, разработка):
-1) Откройте папку в вашей IDE (Clion, Visual Studio) или в терминале.
-2) Создайте директорию сборки и запустите CMake:  
-   - Через PowerShell:
-     mkdir build && cd build
-     cmake -S .. -B . -G "Ninja"
-     cmake --build .
-3) Запустите сгенерированный исполняемый файл (в `build/` или `bin/`).
+```bash
+# Interactive menu (easiest way)
+Automation\build.bat
 
-Примеры команд для разработки (PowerShell):
-```powershell
-# создание и сборка
-mkdir cmake-build-debug; cd cmake-build-debug
-cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Debug
-cmake --build .
-# запуск (пример)
-.\Debug\LevEngine.exe
+# Or quick commands
+Automation\build.bat rebuild    # Full rebuild
+Automation\build.bat build      # Build
+Automation\build.bat run        # Run
 ```
 
-Лицензии
-- Лицензия проекта: В репозитории не найден файл LICENSE в корне; по умолчанию в этом README указана лицензия MIT как временная метка. Если вы хотите другую лицензию — измените/добавьте файл `LICENSE` в корне репозитория, и я обновлю README.
+**📖 Full documentation:** [docs/README.md](docs/README.md) | [Automation/README.md](Automation/README.md)
 
-  Рекомендация: если вы принимаете MIT, добавьте в корень файл `LICENSE` с полным текстом MIT License.
+### Features
 
-- Сторонние библиотеки:
-  - GLEW: исходники и лицензия находятся в `vendor/glew/LICENSE.txt` (BSD-подобная лицензия). Пожалуйста, ознакомьтесь с ним при распространении бинарных сборок.
-  - GLFW и другие библиотеки: см. соответствующие папки в `vendor/` для деталей.
+- 🎮 **Interactive menu** - no need to remember commands
+- 🛠️ **Multiple IDEs** - Visual Studio, CLion, VSCode support
+- ⚡ **Fast builds** - Ninja, MSBuild, Unix Makefiles
+- 📁 **Smart folders** - separate folders per configuration
+- 🔍 **Auto-detection** - finds CMake, Ninja, Visual Studio automatically
 
-Бейджи
-- Статус сборки: ![status](https://img.shields.io/badge/status-experimental-orange)
-- Язык: ![language](https://img.shields.io/badge/language-C++-00599C)
-- Лицензия (предположение): ![license](https://img.shields.io/badge/license-MIT-blue)
-- Сторонние: ![third-party](https://img.shields.io/badge/third--party-GLEW%20(BSD)-lightgrey)
+## Build System
 
-Где смотреть дальше
-- Документация по конфигурации сборки: `Automation/` и `scripts/`.
-- Сторонние зависимости и версии: `cmake/ThirdPartyVersons.cmake` и `cmake/Dependencies.cmake`.
+### Prerequisites
 
-Как я могу помочь далее
-- Добавить/вставить реальную лицензию проекта (MIT/Apache/GPL) и автоматически создать `LICENSE`.
-- Добавить секцию "API" и подробное описание модулей (рендерер, сцена, ресурсы, ввод и т.п.).
-- Сгенерировать шаблон документации (Doxygen/markdown) для модулей и примеров.
+- CMake 3.31.6+
+- Python 3.6+
+- Visual Studio 2019/2022 (MSVC)
+- Ninja (optional, recommended for speed)
 
-Если хотите — укажите предпочитаемую лицензию для проекта (или подтвердите MIT), и я добавлю файл `LICENSE` в корень и обновлю README с корректным бейджем.
+**Quick install (Windows):**
+
+```bash
+choco install python cmake ninja
+```
+
+## 🔄 CI/CD
+
+Project uses GitHub Actions for continuous integration:
+
+- ✅ **Windows Build** - MSVC compilation (Debug/Release)
+- ✅ **Linux Build** - GCC 13 & Clang 18 compilation
+- ✅ **Clang-format Check** - Code style validation
+
+All workflows run automatically on push/PR to `master` branch. See [.github/workflows/](.github/workflows/) for details.
+
+### Quick Start
+
+```bash
+# Interactive menu
+Automation\build.bat
+
+# Command line
+Automation\build.bat rebuild              # Full rebuild
+Automation\build.bat build                # Build only
+Automation\build.bat clean-all            # Clean all
+Automation\build.bat run                  # Run app
+
+# With options
+Automation\build.bat -i clion -c debug generate
+Automation\build.bat -b ninja -c release build
+```
+
+### Build Commands (New System v2.0)
+
+| Command                          | Description                   |
+|----------------------------------|-------------------------------|
+| `Automation\build.bat`           | Interactive menu (easiest)    |
+| `Automation\build.bat generate`  | Generate CMake project        |
+| `Automation\build.bat build`     | Build project                 |
+| `Automation\build.bat rebuild`   | Full rebuild                  |
+| `Automation\build.bat clean`     | Clean current folder          |
+| `Automation\build.bat clean-all` | Clean all build folders       |
+| `Automation\build.bat run`       | Run executable                |
+| `Automation\build.bat format`    | Format code with clang-format |
+
+### Examples
+
+```bash
+# Interactive menu (recommended)
+Automation\build.bat
+
+# Quick commands
+Automation\build.bat rebuild
+Automation\build.bat run
+
+# With options
+Automation\build.bat -i clion -c debug generate
+Automation\build.bat -b ninja -c release build
+
+# Release build
+Automation\build.bat rebuild --configuration Release
+Automation\build.bat run --configuration Release
+
+# Clean build directory
+Automation\build.bat clean
+
+# Format code
+Automation\build.bat format
+```
+
+## Project Structure
+
+```
+LevEngine/
+├── CMakeLists.txt              # Root CMake configuration (v3.31.6, C++23)
+├── CMakePresets.json           # CMake presets for direct CMake usage
+├── README.md                   # This file
+├── App/                        # Application module
+│   ├── CMakeLists.txt          # App CMake configuration
+│   ├── EngineConfig.h.template # Version template
+│   └── Source/
+│       ├── main.cpp            # Entry point
+│       ├── pch.cpp/pch.hpp     # Precompiled headers
+│       └── Version.h           # Version info
+├── Automation/                 # Build automation system v2.0
+│   ├── build.bat               # Main build launcher
+│   ├── build_menu.bat          # Interactive menu launcher
+│   ├── automation_new.py       # Python automation script
+│   ├── build_config.py         # Build configuration
+│   ├── build_actions.py        # Build actions
+│   ├── build_menu.py           # Interactive menu
+│   ├── user_config.template.py # User config template
+│   ├── README.md               # Automation documentation
+│   └── CMAKE/
+│       ├── CmakeHelpers.cmake  # CMake helper functions
+│       └── Toolchains/         # Compiler toolchains
+├── docs/                       # Documentation (RU)
+│   ├── README.md               # Documentation index
+│   ├── BUILD_QUICKSTART.md     # Quick start guide
+│   ├── BUILD_INSTRUCTIONS_RU.md # Full build instructions
+│   └── [other docs]
+├── scripts/                    # Additional scripts
+└── cmake-build-*/              # Build directories (auto-generated)
+```
+
+## Configuration
+
+Build settings can be customized:
+
+1. **User Configuration** (Recommended):
+   ```bash
+   # Copy template
+   copy Automation\user_config.template.py Automation\user_config.py
+   
+   # Edit user_config.py with your preferences
+   ```
+
+2. **Project Configuration**:
+    - `CMakeLists.txt` - CMake settings (C++23, version 1.0.0)
+    - `CMakePresets.json` - CMake presets (otladka, reliz)
+    - `Automation/build_config.py` - Build system configuration
+
+Example `user_config.py`:
+
+```python
+DEFAULT_IDE = "vs"
+DEFAULT_BUILD_SYSTEM = "msbuild"
+DEFAULT_CONFIGURATION = "release"
+
+# Custom paths (optional)
+USER_CMAKE_PATH = r"D:\Tools\CMake\bin\cmake.exe"
+USER_NINJA_PATH = r"D:\Tools\Ninja\ninja.exe"
+
+# Additional CMake flags
+CUSTOM_CMAKE_FLAGS = ["-DENABLE_TESTING=ON"]
+```
+
+## Development
+
+### Project Structure
+
+- **LevEngine** - Game project simplified to root application
+    - Built as `LevEngineApp.exe`
+    - No internal `LevEngineLib` (engine library removed)
+
+### Adding New Source Files
+
+**Application:**
+
+1. Add `.cpp` files to `App/Source/`
+2. Add headers to `App/Source/`
+3. Update `App/CMakeLists.txt` if needed
+4. Rebuild: `Automation\build.bat rebuild`
+
+### CMake Features
+
+- **C++23 Standard** (set in root CMakeLists.txt)
+- **Versioning** - Automatic version configuration via templates
+- **Precompiled Headers** - PCH support for faster compilation (App)
+- **IDE Folders** - Source grouping for better organization
+- **Output Directories** - All binaries in `${CMAKE_BINARY_DIR}/bin`
+
+### IDE Support
+
+- **CLion**: Open project root, uses `cmake-build-*` folders and CMakePresets.json
+- **Visual Studio**: Generate via menu or `Automation\build.bat -i vs -b msbuild generate`
+- **VSCode**: See [docs/VSCODE_SETUP.md](docs/VSCODE_SETUP.md)
+
+## 🤖 Документация
+
+Дизайн документации и вся документация проекта созданы благодаря **GitHub Copilot**.
+
+### Документы:
+
+- [docs/BUILD_QUICKSTART.md](docs/BUILD_QUICKSTART.md) - быстрый старт сборки
+- [docs/BUILD_INSTRUCTIONS_RU.md](docs/BUILD_INSTRUCTIONS_RU.md) - полная инструкция по сборке
+- [docs/CLION_HOTKEYS.md](docs/CLION_HOTKEYS.md) - запуск Build Menu по хоткею в CLion
+- [Automation/BUILD_SYSTEM_README.md](Automation/BUILD_SYSTEM_README.md) - документация системы автоматизации
+- [Automation/BUILD_EXAMPLES.md](Automation/BUILD_EXAMPLES.md) - примеры использования
+- [Automation/BUILD_FAQ.md](Automation/BUILD_FAQ.md) - часто задаваемые вопросы
+
+---
+
+## License
+
+[Your License Here]
+
+---
+
+<center>
+  <em>Документация и дизайн созданы с помощью <strong>GitHub Copilot</strong> 🤖</em>
+</center>
+
+<!-- ci: touch 2025-11-14 -->

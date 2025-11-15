@@ -15,9 +15,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ windows-latest ]
+        os: [ ubuntu-latest, windows-latest ]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup tools (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake build-essential
+
 
       - name: Setup tools (Windows)
         if: runner.os == 'Windows'
@@ -31,29 +38,24 @@ jobs:
         run: cmake --build build --config Release -- -j 2
 
       - name: Run tests
-        shell: pwsh
         run: |
-          if (Test-Path "build/CTestTestfile.cmake") {
-            ctest --test-dir build --output-on-failure || Write-Host "ctest failed (non-fatal)"
-          } else {
-            Write-Host "No CTest testfile found; skipping tests"
-          }
+          if [ -f build/CTestTestfile.cmake ]; then
+            ctest --test-dir build --output-on-failure || true
+          fi
+        shell: bash
 
       - name: Package (CPack or zip)
-        shell: pwsh
         run: |
-          Push-Location build
-          if (Get-Command cpack -ErrorAction SilentlyContinue) {
-            cpack -C Release || Write-Host "cpack returned non-zero"
-          } else {
-            New-Item -ItemType Directory -Path artifacts -Force | Out-Null
-            if (Test-Path bin) {
-              $out = "artifacts/HuyEngine-${{ github.ref_name }}-${{ runner.os }}.zip"
-              if (Test-Path $out) { Remove-Item $out -Force }
-              Compress-Archive -Path bin -DestinationPath $out -Force
-            }
-          }
-          Pop-Location
+          cd build
+          if command -v cpack >/dev/null 2>&1; then
+            cpack -C Release || true
+          else
+            mkdir -p artifacts
+            if [ -d bin ]; then
+              zip -r artifacts/HuyEngine-${{ github.ref_name }}-${{ runner.os }}.zip bin || true
+            fi
+          fi
+        shell: bash
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -72,7 +74,7 @@ jobs:
     name: Create GitHub Release
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
@@ -84,10 +86,9 @@ jobs:
           path: download_artifacts
 
       - name: Display downloaded artifacts
-        shell: pwsh
         run: |
-          Write-Host "Downloaded artifacts:"
-          Get-ChildItem -Path download_artifacts -Recurse -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
+          echo "Downloaded artifacts:"
+          ls -R download_artifacts/
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v1
@@ -98,3 +99,4 @@ jobs:
           files: download_artifacts/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
