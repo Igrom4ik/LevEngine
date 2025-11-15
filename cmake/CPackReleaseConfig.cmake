@@ -36,15 +36,14 @@ if(NOT DEFINED CPACK_INSTALL_CMAKE_PROJECTS)
     set(CPACK_INSTALL_CMAKE_PROJECTS "${CMAKE_BINARY_DIR};${PROJECT_NAME};ALL;Release" CACHE STRING "Projects to install for CPack")
 endif()
 
-# ===== FIX: Only include bin/ and lib/ directories =====
-# Do NOT add individual files (like README.md) here — CPack on Windows cannot handle
-# absolute file paths in CPACK_INSTALLED_DIRECTORIES. README.md is already installed
-# via install(FILES ...) in CMakeLists.txt and will be included automatically.
-set(CPACK_INSTALLED_DIRECTORIES
-        "${CPACK_INSTALL_PREFIX}/bin;bin"
-        "${CPACK_INSTALL_PREFIX}/lib;lib"
-        CACHE STRING "Directories to include in CPack package"
-)
+# ===== FIX: Do NOT use CPACK_INSTALLED_DIRECTORIES with absolute paths =====
+# On Windows, CPack cannot handle absolute paths in CPACK_INSTALLED_DIRECTORIES.
+# Instead, rely on install() rules from CMakeLists.txt and CPACK_INSTALL_CMAKE_PROJECTS.
+# CPack will automatically include files installed via install(FILES/TARGETS/DIRECTORY/...).
+# If you previously attempted to include absolute paths like:
+#   "${CPACK_INSTALL_PREFIX}/bin;bin"
+# then that can cause CPack to construct invalid temporary paths.
+# Therefore this project intentionally does NOT set CPACK_INSTALLED_DIRECTORIES here.
 
 # File name pattern: e.g. LevEngine-1.2.3.zip
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}")

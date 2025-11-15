@@ -53,6 +53,20 @@ jobs:
             cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR=ZIP -DGLFW_BUILD_WAYLAND=OFF -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/staging
           fi
 
+      - name: Debug staging contents (before package)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          echo "=== Checking if README.md exists in repo ==="
+          ls -la README.md || echo "README.md NOT FOUND in repo root"
+
+          echo "=== Checking staging directory (may not exist until install) ==="
+          if [ -d "${{ github.workspace }}/staging" ]; then
+            find "${{ github.workspace }}/staging" -type f -maxdepth 4 -print || true
+          else
+            echo "Staging directory does not exist yet"
+          fi
+
       - name: Configure (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
