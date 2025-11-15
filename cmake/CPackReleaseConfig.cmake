@@ -24,17 +24,23 @@ if (NOT DEFINED CMAKE_INSTALL_PREFIX)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Install prefix for packaging")
 endif ()
 
-# Output directory for produced archives (default: <build>/package)
-set(CPACK_OUTPUT_FILE_PREFIX "${CMAKE_BINARY_DIR}/package" CACHE PATH "CPack output directory")
+# Ensure CPack will run install from the build tree when packaging
+# Format: <build-dir>;<project-name>;<component-to-install>;<config>
+if(NOT DEFINED CPACK_INSTALL_CMAKE_PROJECTS)
+  # Use Release config by default for single-config packaging; CPack may override with -C
+  set(CPACK_INSTALL_CMAKE_PROJECTS "${CMAKE_BINARY_DIR};${PROJECT_NAME};ALL;Release" CACHE STRING "Projects to install for CPack")
+endif()
 
-# Do not wrap contents into an extra top-level dir
-set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF CACHE BOOL "Do not include top-level folder in archive")
+# Force CPack to install into the build's install prefix to avoid requiring admin rights
+set(CPACK_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "CPack install prefix (override to control where project is installed during packaging)")
+# Ensure DESTDIR-style behavior so install goes into CPACK_INSTALL_PREFIX rather than system locations
+set(CPACK_SET_DESTDIR "ON" CACHE BOOL "Use DESTDIR for packaging installs" )
 
-# Only include bin/, lib/ and README.md from the install prefix
+# Only include bin/, lib/ and README.md from the build install prefix
 set(CPACK_INSTALLED_DIRECTORIES
-        "${CMAKE_INSTALL_PREFIX}/bin;bin"
-        "${CMAKE_INSTALL_PREFIX}/lib;lib"
-        "${CMAKE_INSTALL_PREFIX}/README.md;."
+    "${CMAKE_BINARY_DIR}/install/bin;bin"
+    "${CMAKE_BINARY_DIR}/install/lib;lib"
+    "${CMAKE_BINARY_DIR}/install/README.md;."
 )
 
 # File name pattern: e.g. LevEngine-1.2.3.zip
