@@ -41,27 +41,68 @@ jobs:
           fi
         shell: bash
 
-      - name: Configure
+      - name: Configure (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
         run: |
           if [ -n "${{ steps.set_version.outputs.version }}" ]; then
             echo "Configuring with version ${{ steps.set_version.outputs.version }}"
-            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DHuyEngine_VERSION=${{ steps.set_version.outputs.version }} -DCPACK_PACKAGE_VERSION=${{ steps.set_version.outputs.version }} -DCPACK_GENERATOR=ZIP -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/staging
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPROJECT_VERSION="${{ steps.set_version.outputs.version }}" -DCPACK_PACKAGE_VERSION="${{ steps.set_version.outputs.version }}" -DCPACK_GENERATOR=ZIP -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/staging
           else
             echo "Configuring without explicit version (use project() default)"
             cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR=ZIP -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/staging
           fi
-        shell: bash
 
-      - name: Build
+      - name: Configure (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          if ("${{ steps.set_version.outputs.version }}" -ne "") {
+            Write-Host "Configuring with version $(${{ steps.set_version.outputs.version }})"
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPROJECT_VERSION="${{ steps.set_version.outputs.version }}" -DCPACK_PACKAGE_VERSION="${{ steps.set_version.outputs.version }}" -DCPACK_GENERATOR=ZIP -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE\staging"
+          } else {
+            Write-Host "Configuring without explicit version (use project() default)"
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR=ZIP -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE\staging"
+          }
+
+      - name: Build (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
         run: cmake --build build --config Release --parallel
 
-      - name: Install into staging
+      - name: Build (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: cmake --build build --config Release -- /m
+
+      - name: Install into staging (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
         run: cmake --install build --config Release --prefix ${{ github.workspace }}/staging
 
-      - name: Run packaging (CPack)
-        run: cmake --build build --config Release --target package
+      - name: Install into staging (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: cmake --install build --config Release --prefix "$env:GITHUB_WORKSPACE\staging"
 
-      - name: Locate produced ZIP
+      - name: Run packaging (CPack) (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          # Prefer calling package target from build directory so CPack uses generated CPack configs
+          cmake --build build --config Release --target package || (echo "package target failed; listing build tree" && ls -la build || true; exit 1)
+          ls -la build/package || true
+
+      - name: Run packaging (CPack) (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          # Run package target from build directory so CPack uses the generated CPackConfig.cmake
+          cmake --build build --config Release --target package
+
+      - name: Locate produced ZIP (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
         run: |
           echo "Looking for ZIP files under build/ and build/package/"
           ls -la build || true
@@ -71,10 +112,19 @@ jobs:
             echo "No ZIP produced in expected locations"; exit 1
           fi
           echo "ZIP found: $ZIP"
-        shell: bash
+
+      - name: Locate produced ZIP (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem -Path build\*.zip -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $zip) { $zip = Get-ChildItem -Path build\package\*.zip -ErrorAction SilentlyContinue | Select-Object -First 1 }
+          if (-not $zip) { Write-Error "ZIP not found"; exit 1 }
+          Write-Host "ZIP found: $($zip.FullName)"
 
       - name: Verify package contents (Linux)
         if: matrix.os == 'ubuntu-latest'
+        shell: bash
         run: |
           ZIP=$(ls build/*.zip 2>/dev/null || ls build/package/*.zip 2>/dev/null || true)
           if [ -z "$ZIP" ]; then echo "ZIP not found"; exit 1; fi
@@ -87,7 +137,6 @@ jobs:
           if grep -Ei '\.cpp$|\.h$' contents.txt; then
             echo "Source files (*.cpp or *.h) found in archive"; exit 1
           fi
-        shell: bash
 
       - name: Verify package contents (Windows)
         if: matrix.os == 'windows-latest'

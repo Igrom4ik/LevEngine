@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.31.6)
-project(LevEngine VERSION 1.0.0 LANGUAGES CXX)
+
+# Allow overriding project version via -DPROJECT_VERSION on command line or CI
+set(PROJECT_VERSION "1.0.0" CACHE STRING "Project version (override with -DPROJECT_VERSION)")
+project(LevEngine VERSION ${PROJECT_VERSION} LANGUAGES CXX)
 
 # Ensure older third-party projects that use very old cmake_minimum_required can still be configured
 if (NOT DEFINED CMAKE_POLICY_VERSION_MINIMUM)
@@ -121,9 +124,14 @@ if (EXISTS "${CMAKE_SOURCE_DIR}/cmake/version.txt.in")
     configure_file(${CMAKE_SOURCE_DIR}/cmake/version.txt.in ${CMAKE_BINARY_DIR}/version.txt @ONLY)
 endif()
 
-# Ensure README.md is available in build directory so CPack or custom packaging includes it
-if (EXISTS "${CMAKE_SOURCE_DIR}/README.md")
-    configure_file(${CMAKE_SOURCE_DIR}/README.md ${CMAKE_BINARY_DIR}/README.md COPYONLY)
+# Generate a C/C++ header with version information if template exists
+# Support both root-level Version.h.in and cmake/Version.h.in
+if (EXISTS "${CMAKE_SOURCE_DIR}/Version.h.in")
+    configure_file(${CMAKE_SOURCE_DIR}/Version.h.in ${CMAKE_BINARY_DIR}/App/Version.h @ONLY)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR}/App)
+elseif (EXISTS "${CMAKE_SOURCE_DIR}/cmake/Version.h.in")
+    configure_file(${CMAKE_SOURCE_DIR}/cmake/Version.h.in ${CMAKE_BINARY_DIR}/App/Version.h @ONLY)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR}/App)
 endif()
 
 # Put build outputs to a single place
@@ -143,8 +151,62 @@ if (EXISTS "${CMAKE_SOURCE_DIR}/cmake/CPackReleaseConfig.cmake")
     include("${CMAKE_SOURCE_DIR}/cmake/CPackReleaseConfig.cmake")
 endif()
 
-# CPack configuration
+# CPack configuration (ensure README and package naming)
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+set(CPACK_GENERATOR "ZIP" CACHE STRING "CPack generator to use")
+set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}")
+
+# Ensure CPack has minimum required metadata: package name and version
+if(NOT DEFINED CPACK_PACKAGE_NAME)
+  set(CPACK_PACKAGE_NAME "${PROJECT_NAME}" CACHE STRING "Package name for CPack")
+endif()
+# Prefer explicit PROJECT_VERSION (cache or -D override) which contains full semver; fall back to CMAKE_PROJECT_VERSION
+if(DEFINED PROJECT_VERSION AND NOT "${PROJECT_VERSION}" STREQUAL "")
+  set(_resolved_project_version "${PROJECT_VERSION}")
+elseif(DEFINED CMAKE_PROJECT_VERSION AND NOT "${CMAKE_PROJECT_VERSION}" STREQUAL "")
+  set(_resolved_project_version "${CMAKE_PROJECT_VERSION}")
+else()
+  set(_resolved_project_version "0.0.0")
+endif()
+
+# Diagnostic: print resolved project version during configuration
+message(STATUS "Resolved project version for packaging: ${_resolved_project_version}")
+
+if(NOT DEFINED CPACK_PACKAGE_VERSION)
+  # Force CPACK_PACKAGE_VERSION from the configured PROJECT_VERSION-derived value
+  set(CPACK_PACKAGE_VERSION "${_resolved_project_version}" CACHE STRING "Package version for CPack")
+else()
+  # Ensure CPACK_PACKAGE_VERSION reflects PROJECT_VERSION in case caller passed a value
+  set(CPACK_PACKAGE_VERSION "${_resolved_project_version}" CACHE STRING "Package version for CPack" FORCE)
+endif()
+
+# Split version into components for CPACK (some generators use MAJOR/MINOR/PATCH fields)
+string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ver_match ${CPACK_PACKAGE_VERSION})
+if(_ver_match)
+  # CMAKE_MATCH_1..3 are set by the previous REGEX MATCH call
+  set(CPACK_PACKAGE_VERSION_MAJOR "${CMAKE_MATCH_1}")
+  set(CPACK_PACKAGE_VERSION_MINOR "${CMAKE_MATCH_2}")
+  set(CPACK_PACKAGE_VERSION_PATCH "${CMAKE_MATCH_3}")
+else()
+  string(REGEX MATCH "^([0-9]+)\\.([0-9]+)" _ver_match2 ${CPACK_PACKAGE_VERSION})
+  if(_ver_match2)
+    set(CPACK_PACKAGE_VERSION_MAJOR "${CMAKE_MATCH_1}")
+    set(CPACK_PACKAGE_VERSION_MINOR "${CMAKE_MATCH_2}")
+    set(CPACK_PACKAGE_VERSION_PATCH "0")
+  else()
+    string(REGEX MATCH "^([0-9]+)" _ver_match3 ${CPACK_PACKAGE_VERSION})
+    if(_ver_match3)
+      set(CPACK_PACKAGE_VERSION_MAJOR "${CMAKE_MATCH_1}")
+    else()
+      set(CPACK_PACKAGE_VERSION_MAJOR "0")
+    endif()
+    set(CPACK_PACKAGE_VERSION_MINOR "0")
+    set(CPACK_PACKAGE_VERSION_PATCH "0")
+  endif()
+endif()
+
+# Force CPACK_PACKAGE_FILE_NAME to use resolved values (use resolved_project_version directly to avoid truncation)
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${_resolved_project_version}-${CMAKE_SYSTEM_NAME}" CACHE STRING "CPack output file name" FORCE)
 
 # Disable source package generation to avoid packaging repository source files into release archives
 set(CPACK_SOURCE_ZIP OFF CACHE BOOL "Disable CPack source ZIP generation" FORCE)
