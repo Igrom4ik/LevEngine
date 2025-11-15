@@ -1,3 +1,5 @@
+#include "pch.hpp"
+
 #include <iostream>
 
 // Попытка подключить заглушки GLFW/GLEW
@@ -17,4 +19,3 @@ int main() {
 
     return 0;
 }
-

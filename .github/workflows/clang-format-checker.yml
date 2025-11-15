@@ -1,0 +1,19 @@
+name: clang-format check
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format
+      - name: Run clang-format check
+        run: |
+          find . -name "*.cpp" -o -name "*.h" | xargs -r clang-format -style=file -output-replacements-xml | grep -q '<replacement ' && (echo "Formatting issues found" && exit 1) || echo "No formatting changes"
+

@@ -5,6 +5,10 @@
 ![license](https://img.shields.io/badge/license-MIT-blue)
 ![third-party](https://img.shields.io/badge/third--party-GLEW%20(BSD)-lightgrey)
 
+<!-- CI status badges -->
+[![Windows Build](https://github.com/Igrom4ik/LevEngine/actions/workflows/windows-build.yml/badge.svg)](https://github.com/Igrom4ik/LevEngine/actions/workflows/windows-build.yml)
+[![clang-format](https://github.com/Igrom4ik/LevEngine/actions/workflows/clang-format-checker.yml/badge.svg)](https://github.com/Igrom4ik/LevEngine/actions/workflows/clang-format-checker.yml)
+
 Коротко: LevEngine — это небольшой кроссплатформенный игровой движок на C++ с архитектурой, ориентированной на простоту расширения и интеграцию с современными средствами сборки (CMake, Ninja, Visual Studio). Проект содержит исходный код движка, сборочные сценарии и поставляется с набором сторонних библиотек в папке `vendor/`.
 
 Основные возможности (текущее состояние):
@@ -64,4 +68,3 @@ cmake --build .
 - Сгенерировать шаблон документации (Doxygen/markdown) для модулей и примеров.
 
 Если хотите — укажите предпочитаемую лицензию для проекта (или подтвердите MIT), и я добавлю файл `LICENSE` в корень и обновлю README с корректным бейджем.
-
