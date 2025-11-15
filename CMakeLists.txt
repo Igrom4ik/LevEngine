@@ -25,10 +25,20 @@ include(cmake/Dependencies.cmake)
 
 set(PROJECT_SOURCE_FILES
     source/main.cpp
+    source/pch.cpp
 )
 
 include_directories(source)
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_FILES})
+
+# Precompiled headers (PCH) - use CMake's target_precompile_headers when available
+# This improves build times by precompiling frequently used headers.
+if (COMMAND target_precompile_headers)
+  # target_precompile_headers requires modern CMake (>=3.16); check for the command availability
+  target_precompile_headers(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/source/pch.hpp")
+else()
+  message(STATUS "target_precompile_headers not available; skipping PCH configuration")
+endif()
 
 # Option to fetch thirdparty libraries via CMake FetchContent (default ON)
 option(LEVENGINE_FETCH_THIRDPARTY "Download thirdparty libs via FetchContent" ON)
