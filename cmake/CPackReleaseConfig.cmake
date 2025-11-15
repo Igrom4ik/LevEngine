@@ -38,9 +38,10 @@ set(CPACK_SET_DESTDIR "ON" CACHE BOOL "Use DESTDIR for packaging installs" )
 
 # Only include bin/, lib/ and README.md from the build install prefix
 set(CPACK_INSTALLED_DIRECTORIES
-    "${CMAKE_BINARY_DIR}/install/bin;bin"
-    "${CMAKE_BINARY_DIR}/install/lib;lib"
-    "${CMAKE_BINARY_DIR}/install/README.md;."
+    "${CPACK_INSTALL_PREFIX}/bin;bin"
+    "${CPACK_INSTALL_PREFIX}/lib;lib"
+    "${CPACK_INSTALL_PREFIX}/README.md;."
+    CACHE STRING "Directories to include in CPack package"
 )
 
 # File name pattern: e.g. LevEngine-1.2.3.zip

@@ -174,7 +174,7 @@ install(FILES "${CMAKE_SOURCE_DIR}/README.md" DESTINATION .)
 # As a defensive measure, ensure README.md is present under the configured install prefix
 # even if an alternate install invocation or generator changes DESTINATION semantics.
 install(CODE "
-  if(NOT EXISTS \"${CMAKE_INSTALL_PREFIX}/README.md\")\n    file(INSTALL DESTINATION \"${CMAKE_INSTALL_PREFIX}\" FILES \"${CMAKE_SOURCE_DIR}/README.md\")\n  endif()\n")
+  if(NOT EXISTS \"${CPACK_INSTALL_PREFIX}/README.md\")\n    file(INSTALL DESTINATION \"${CPACK_INSTALL_PREFIX}\" FILES \"${CMAKE_SOURCE_DIR}/README.md\")\n  endif()\n")
 
 # Optional release overrides
 if (EXISTS "${CMAKE_SOURCE_DIR}/cmake/CPackReleaseConfig.cmake")
@@ -241,9 +241,9 @@ set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${_resolved_project_version}-
 # Ensure CPack packages only the installed runtime artifacts (bin, lib) and README
 # Force this into the cache so that build-time generated CPack files honor it.
 set(CPACK_INSTALLED_DIRECTORIES
-    "${CMAKE_INSTALL_PREFIX}/bin;bin"
-    "${CMAKE_INSTALL_PREFIX}/lib;lib"
-    "${CMAKE_INSTALL_PREFIX}/README.md;."
+    "${CPACK_INSTALL_PREFIX}/bin;bin"
+    "${CPACK_INSTALL_PREFIX}/lib;lib"
+    "${CPACK_INSTALL_PREFIX}/README.md;."
     CACHE STRING "Directories to include in CPack package" FORCE)
 
 # Explicitly set CPACK_SOURCE_IGNORE_FILES using character class for literal dot to avoid escape issues
@@ -262,6 +262,7 @@ set(CPACK_SOURCE_IGNORE_FILES
     "~$"
     CACHE STRING "Files to ignore for CPack source packages" FORCE)
 
+include(InstallRequiredSystemLibraries)
 include(CPack)
 
 # Helper targets
@@ -269,8 +270,8 @@ if (WIN32)
   add_custom_target(package-release
       COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target install
       # Clean up install tree to avoid packaging headers/docs from third-party libraries
-      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_PREFIX}/include"
-      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_PREFIX}/share"
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CPACK_INSTALL_PREFIX}/include"
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CPACK_INSTALL_PREFIX}/share"
       COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target package
       COMMAND ${CMAKE_COMMAND} -E echo "Verifying produced package..."
       COMMAND powershell -ExecutionPolicy Bypass -File "${CMAKE_SOURCE_DIR}/scripts/check_package.ps1" "${CMAKE_BINARY_DIR}/package"
@@ -280,22 +281,22 @@ else()
   add_custom_target(package-release
       COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target install
       # Clean up install tree to avoid packaging headers/docs from third-party libraries
-      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_PREFIX}/include"
-      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_PREFIX}/share"
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CPACK_INSTALL_PREFIX}/include"
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CPACK_INSTALL_PREFIX}/share"
       COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target package
       COMMAND ${CMAKE_COMMAND} -E echo "Verifying produced package..."
       COMMAND "${CMAKE_SOURCE_DIR}/scripts/check_package.sh" "${CMAKE_BINARY_DIR}/package"
       WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-      COMMENT "Build, install and create release ZIP via CPack and verify package (POSIX)")
+      COMMENT "Build, install and create release ZIP via CPack and verify (POSIX)")
 endif()
 
 # package-clean: install -> remove include/share -> create sanitized archive using scripts/pack_clean
 if (WIN32)
   add_custom_target(package-clean
       COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target install
-      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_PREFIX}/include"
-      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_PREFIX}/share"
-      COMMAND powershell -ExecutionPolicy Bypass -File "${CMAKE_SOURCE_DIR}/scripts/pack_clean.ps1" "${CMAKE_INSTALL_PREFIX}" "${CMAKE_BINARY_DIR}/package" "${CPACK_PACKAGE_FILE_NAME}-Windows.zip"
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CPACK_INSTALL_PREFIX}/include"
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CPACK_INSTALL_PREFIX}/share"
+      COMMAND powershell -ExecutionPolicy Bypass -File "${CMAKE_SOURCE_DIR}/scripts/pack_clean.ps1" "${CPACK_INSTALL_PREFIX}" "${CMAKE_BINARY_DIR}/package" "${CPACK_PACKAGE_FILE_NAME}-Windows.zip"
       COMMAND ${CMAKE_COMMAND} -E echo "Verifying produced package..."
       COMMAND powershell -ExecutionPolicy Bypass -File "${CMAKE_SOURCE_DIR}/scripts/check_package.ps1" "${CMAKE_BINARY_DIR}/package"
       WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
@@ -303,9 +304,9 @@ if (WIN32)
 else()
   add_custom_target(package-clean
       COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target install
-      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_PREFIX}/include"
-      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_PREFIX}/share"
-      COMMAND "${CMAKE_SOURCE_DIR}/scripts/pack_clean.sh" "${CMAKE_INSTALL_PREFIX}" "${CMAKE_BINARY_DIR}/package" "${CPACK_PACKAGE_FILE_NAME}-Linux.zip"
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CPACK_INSTALL_PREFIX}/include"
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CPACK_INSTALL_PREFIX}/share"
+      COMMAND "${CMAKE_SOURCE_DIR}/scripts/pack_clean.sh" "${CPACK_INSTALL_PREFIX}" "${CMAKE_BINARY_DIR}/package" "${CPACK_PACKAGE_FILE_NAME}-Linux.zip"
       COMMAND ${CMAKE_COMMAND} -E echo "Verifying produced package..."
       COMMAND "${CMAKE_SOURCE_DIR}/scripts/check_package.sh" "${CMAKE_BINARY_DIR}/package"
       WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
