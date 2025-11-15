@@ -15,6 +15,8 @@ jobs:
         config: [ Debug, Release ]
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: false
 
       - name: Configure CMake
         run: |
@@ -25,6 +27,8 @@ jobs:
           cmake --build build --config ${{ matrix.config }} --parallel
 
       - name: Run simple smoke test (if executable exists)
-        run: |
-          if (Test-Path "build\\$(${{ matrix.config }})\\LevEngine.exe") { "Found executable" } else { Write-Host "Executable not found - skipping" }
         shell: powershell
+        run: |
+          $config = '${{ matrix.config }}'
+          $exe = Join-Path -Path "build" -ChildPath "$config\LevEngine.exe"
+          if (Test-Path $exe) { Write-Host "Found executable: $exe" } else { Write-Host "Executable not found - skipping" }
