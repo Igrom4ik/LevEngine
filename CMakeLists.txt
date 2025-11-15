@@ -4,6 +4,42 @@ cmake_minimum_required(VERSION 3.31.6)
 set(PROJECT_VERSION "1.0.0" CACHE STRING "Project version (override with -DPROJECT_VERSION)")
 project(LevEngine VERSION ${PROJECT_VERSION} LANGUAGES CXX)
 
+# Lint: detect any install(...) calls in the source tree that do not include DESTINATION.
+# This prevents the "file INSTALL given no DESTINATION" error at install/package time.
+# Skip vendor and build directories (these are external or generated).
+if(NOT DEFINED SKIP_INSTALL_DESTINATION_LINT)
+  message(STATUS "Running install() DESTINATION lint...")
+  file(GLOB_RECURSE _cmake_files RELATIVE "${CMAKE_SOURCE_DIR}"
+       "${CMAKE_SOURCE_DIR}/*.cmake" "${CMAKE_SOURCE_DIR}/**/CMakeLists.txt")
+  set(_install_issues "")
+  foreach(_f IN LISTS _cmake_files)
+    string(REGEX MATCH "^(cmake-build|build_|build/|\.git/|_deps/|cmake-ci/|build_ci/|build_test/|cmake-build-).*" _skip "${_f}")
+    if(_skip)
+      continue()
+    endif()
+    # also skip vendor tree (third-party source) by default
+    string(FIND "${_f}" "vendor/" _is_vendor)
+    if(NOT "${_is_vendor}" STREQUAL "-1")
+      continue()
+    endif()
+
+    file(READ "${CMAKE_SOURCE_DIR}/${_f}" _content)
+    # collapse newlines so multi-line install(...) can be matched in a simple regex
+    string(REGEX REPLACE "\r?\n" " " _single "${_content}")
+    # Only match install(...) forms that require DESTINATION: FILES, TARGETS, PROGRAMS, DIRECTORY
+    string(REGEX MATCHALL "install[[:space:]]*\\(\\s*(FILES|TARGETS|PROGRAMS|DIRECTORY) [^)]*\\)" _matches "${_single}")
+    foreach(_m IN LISTS _matches)
+      string(FIND "${_m}" "DESTINATION" _hasDest)
+      if(_hasDest EQUAL -1)
+        list(APPEND _install_issues "${_f}: ${_m}")
+      endif()
+    endforeach()
+  endforeach()
+  if(_install_issues)
+    message(FATAL_ERROR "Found install() calls without DESTINATION (set SKIP_INSTALL_DESTINATION_LINT to skip):\n${_install_issues}")
+  endif()
+endif()
+
 # Ensure a safe install prefix for packaging (use build/install by default to avoid requiring admin privileges)
 if (NOT DEFINED CMAKE_INSTALL_PREFIX OR CMAKE_INSTALL_PREFIX STREQUAL "")
   set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Install prefix for packaging" FORCE)
