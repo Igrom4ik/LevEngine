@@ -41,11 +41,12 @@ endif()
 # Ensure DESTDIR-style behavior so install goes into CPACK_INSTALL_PREFIX rather than system locations
 #set(CPACK_SET_DESTDIR "ON" CACHE BOOL "Use DESTDIR for packaging installs" )
 
-# Only include bin/, lib/ and README.md from the build install prefix
+# Only include bin/ and lib/ directories from the build install prefix. Do NOT add
+# individual files (like README.md) here — absolute file paths can break CPack on
+# Windows by producing invalid temporary directory names.
 set(CPACK_INSTALLED_DIRECTORIES
     "${CPACK_INSTALL_PREFIX}/bin;bin"
     "${CPACK_INSTALL_PREFIX}/lib;lib"
-    "${CPACK_INSTALL_PREFIX}/README.md;."
     CACHE STRING "Directories to include in CPack package"
 )
 
