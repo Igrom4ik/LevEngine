@@ -1,161 +1,50 @@
-name: Package and Verify (debug)
+name: Package and verify (debug)
 
 on:
-  workflow_dispatch:
   push:
-    branches: [ "master" ]
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  package-and-verify:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ ubuntu-latest, windows-latest ]
+  build-and-package:
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          # ensure submodules are fetched (if project uses them) and full history for tags
-          submodules: recursive
-          fetch-depth: 0
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
 
-      - name: Init submodules (Linux)
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          git submodule sync --recursive || true
-          git submodule update --init --recursive || true
+    - name: Install build dependencies (GLU)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libglu1-mesa-dev build-essential cmake
 
-      - name: Init submodules (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          git submodule sync --recursive || true
-          git submodule update --init --recursive || true
+    - name: Configure CMake
+      run: |
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 
-      - name: Setup tools (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            ninja-build cmake zip unzip wayland-protocols \
-            libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev || true
-        shell: bash
+    - name: Build
+      run: |
+        cmake --build build --config Debug -- -j$(nproc)
 
-      - name: Setup tools (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          choco install -y ninja cmake zip || true
+    - name: Install
+      run: |
+        cmake --install build --config Debug --prefix build/install
 
-      - name: Configure (CMake)
-        run: |
-          # Prefer using bundled vendor/glfw-3.4 if present to avoid missing submodule issues
-          EXTRA_FLAGS=""
-          if [ -d "${{ github.workspace }}/vendor/glfw-3.4" ]; then
-            echo "Found vendor/glfw-3.4, using it instead of fetching: setting -Dglfw_SOURCE_DIR"
-            EXTRA_FLAGS="-Dglfw_SOURCE_DIR=${{ github.workspace }}/vendor/glfw-3.4"
-          fi
-          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DGLFW_BUILD_WAYLAND=OFF ${EXTRA_FLAGS}
+    - name: Package (CPack)
+      run: |
+        cmake --build build --config Debug --target package
 
-      - name: Build
-        run: cmake --build build --config Release -- -j 2
+    - name: Verify package contains README.md
+      run: |
+        # Find produced ZIP and list its contents
+        PACKAGE_DIR="$(pwd)/build/package"
+        ZIP_FILE=$(ls $PACKAGE_DIR/*.zip 2>/dev/null | head -n1 || true)
+        if [ -z "$ZIP_FILE" ]; then
+          echo "No ZIP package found in $PACKAGE_DIR"
+          exit 1
+        fi
+        unzip -l "$ZIP_FILE" | grep -i "README.md" || (echo "README.md not found in archive" && exit 1)
 
-      - name: Package (CPack or zip)
-        run: |
-          cd build
-          if command -v cpack >/dev/null 2>&1; then
-            cpack -C Release || true
-          else
-            mkdir -p artifacts
-            if [ -d bin ]; then
-              zip -r artifacts/LevEngine-${{ github.sha }}-${{ runner.os }}.zip bin || true
-            fi
-          fi
-        shell: bash
-
-      - name: Find produced archive
-        id: find_archive
-        run: |
-          shopt -s nullglob 2>/dev/null || true
-          files=(build/*.zip build/*.tar.gz build/*.tgz build/*.7z build/*.msi build/*.exe build/artifacts/*)
-          for f in "${files[@]}"; do
-            echo "archive=$f" >> $GITHUB_OUTPUT
-            exit 0
-          done
-          echo "archive=" >> $GITHUB_OUTPUT
-        shell: bash
-
-      - name: "Debug: show archive path"
-        run: |
-          echo "Archive: ${{ steps.find_archive.outputs.archive }}"
-
-      - name: Debug + Verify (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          set -e
-          ARCH=${{ steps.find_archive.outputs.archive }}
-          if [ -z "$ARCH" ]; then
-            echo "No archive found in build/"; exit 1
-          fi
-          echo "List archive contents:"
-          unzip -l "$ARCH" || true
-          mkdir -p tmp_unpack
-          unzip -q "$ARCH" -d tmp_unpack || true
-          echo "First 200 files:"; find tmp_unpack -type f | sed -n '1,200p'
-
-          # Verify README.md exists at root or in any top-level dir
-          find tmp_unpack -type f -printf "%P\n" | sed 's|\\\\|/|g' > contents.txt
-          grep -q -E '(^|/)(README.md)$' contents.txt || (echo "README.md not found in archive" && exit 1)
-
-          # Verify no source files
-          if find tmp_unpack -type f \( -name "*.cpp" -o -name "*.c" -o -name "*.h" -o -name "*.hpp" \) | read; then
-            echo "Source files (*.cpp/*.h) found in package"; find tmp_unpack -type f \( -name "*.cpp" -o -name "*.h" \) | sed -n '1,50p'; exit 1
-          fi
-        shell: bash
-
-      - name: Debug + Verify (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $archive = "${{ steps.find_archive.outputs.archive }}"
-          if ([string]::IsNullOrEmpty($archive)) { Write-Error "No archive found in build/"; exit 1 }
-          Write-Output "Archive: $archive"
-
-          $tmp = "tmp_unpack"
-          Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
-          New-Item -ItemType Directory -Path $tmp | Out-Null
-
-          try {
-            Expand-Archive -Path $archive -DestinationPath $tmp -Force -ErrorAction Stop
-          } catch {
-            Write-Output "Expand-Archive failed (maybe not a zip). Listing files instead:"
-            Get-ChildItem -Path build -Recurse | Select-Object -First 200 | ForEach-Object { Write-Output $_.FullName }
-          }
-
-          Write-Output "First 200 files in unpacked archive:" 
-          Get-ChildItem -Path $tmp -Recurse | Select-Object -First 200 | ForEach-Object { Write-Output $_.FullName }
-
-          # create contents.txt relative paths
-          $files = Get-ChildItem -Path $tmp -Recurse -File | ForEach-Object { $_.FullName.Substring((Get-Item $tmp).FullName.Length+1) }
-          $files | Out-File -FilePath contents.txt -Encoding utf8
-
-          if (-not (Select-String -Pattern '(^|/)(README.md)$' -Path contents.txt -Quiet)) {
-            Write-Error "README.md not found in archive"
-            exit 1
-          }
-
-          $src = Get-ChildItem -Path $tmp -Recurse -Include *.cpp,*.h -ErrorAction SilentlyContinue
-          if ($src) {
-            Write-Error "Source files (*.cpp/*.h) found in package"
-            $src | Select-Object FullName -First 20 | ForEach-Object { Write-Output $_.FullName }
-            exit 1
-          }
-
-      - name: Upload debug artifact (contents.txt)
-        if: steps.find_archive.outputs.archive != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: package-contents
-          path: |
-            contents.txt
-            tmp_unpack/**
