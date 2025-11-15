@@ -209,6 +209,12 @@ install(FILES "${CMAKE_SOURCE_DIR}/README.md" DESTINATION .)
 
 # As a defensive measure, ensure README.md is present under the configured install prefix
 # even if an alternate install invocation or generator changes DESTINATION semantics.
+# Ensure CPACK_INSTALL_PREFIX is defined (fallback to CMAKE_INSTALL_PREFIX) so install(CODE) that
+# references it does not emit a file(INSTALL DESTINATION "" ...) when CPACK isn't setting it.
+if(NOT DEFINED CPACK_INSTALL_PREFIX OR "${CPACK_INSTALL_PREFIX}" STREQUAL "")
+  set(CPACK_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+endif()
+
 install(CODE "
   if(NOT EXISTS \"${CPACK_INSTALL_PREFIX}/README.md\")\n    file(INSTALL DESTINATION \"${CPACK_INSTALL_PREFIX}\" FILES \"${CMAKE_SOURCE_DIR}/README.md\")\n  endif()\n")
 
