@@ -1,47 +1,85 @@
-# Build artifacts
+# Ignore CMake and build artifacts
+/build/
+/build-*/
+/build-msvc/
+/cmake-build-debug/
+/cmake-build-release/
+/cmake-build-release-event-trace/
 cmake-build*/
-cmake-build-*/
-Debug/
-Release/
-bin/
-lib/
+/CMakeFiles/
+/CMakeCache.txt
+/cmake_install.cmake
+/InstallScripts.json
+/TargetDirectories.txt
+/generate.stamp*
+/bin/
+/x64/
+*.vcxproj.user
+*.suo
+*.user
+*.pdb
 *.obj
 *.o
+*.ilk
 *.exe
-*.pdb
+*.log
+*.cache
+/.vs/
+/.idea/
+/.vscode/
+# Keep VSCode project configuration
+!/.vscode/tasks.json
+!/.vscode/launch.json
+!/.vscode/c_cpp_properties.json
+!/.vscode/settings.json
 
-# CMake files
-CMakeCache.txt
-CMakeFiles/
-cmake_install.cmake
-install_manifest.txt
-build/
-
-# Visual Studio
-*.vcxproj*
-*.sln
-.vs/
-
-# IDE
-.idea/
-.vscode/
-
-# Python caches
+# Python cache
 __pycache__/
 *.pyc
 
-# Misc
-*.log
+# Build state
+Automation/.build_state.json
 
-# Logs and CI outputs (added)
-*.out
-*_out.txt
-*-output.txt
-lsremote_out.txt
-push-output.txt
-status_out.txt
-log_out.txt
-cmake-config.log
+# Ignore packaging and distribution
+dist/
+build-dist/
 
-# Vendor built artifacts (optional)
-vendor/**/build/
+# Ignore user/editor/project specific files
+*.user
+*.suo
+
+# Keep repo-specific files in root
+!README.md
+
+# Keep docs in repo (moved to docs/)
+!docs/
+
+# Ignore PVS-Studio analyzer data and reports
+/.PVS-Studio/
+PVS-Studio.log
+PVS-Studio.cfg
+PVS-Studio.json
+PVS-Studio.tasks
+PVS-Studio.reports/
+*.pvslog
+*.pvsconfig
+
+# Ignore common temp/editor files
+*.tmp*
+*~
+*.swp
+*.swo
+
+# Ignore PVS-Studio temporary/generation files often created near sources
+*.PVS-Studio.*
+App/Source/*.PVS-Studio.i
+
+# Keep EngineConfig.h tracked
+EngineConfig.h
+
+# Local validation/build/test folders
+build_validate/
+build_validate*/
+staging/
+pkg_extract/
+package/
