@@ -19,10 +19,15 @@ endif ()
 # Use ZIP and TGZ generator by default
 set(CPACK_GENERATOR "ZIP;TGZ" CACHE STRING "CPack generator")
 
-# Ensure CMakeInstallPrefix exists — default to <binary>/install if not set
-if (NOT DEFINED CMAKE_INSTALL_PREFIX)
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Install prefix for packaging")
-endif ()
+# Do NOT override CMAKE_INSTALL_PREFIX here — overriding the canonical install prefix can lead to
+# doubled/absolute paths when CPack composes temporary packaging directories. Use a dedicated
+# CPACK_INSTALL_PREFIX (staging directory under the build tree) for packaging operations instead.
+if (NOT DEFINED CPACK_INSTALL_PREFIX)
+    set(CPACK_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "CPack install prefix (override to control where project is installed during packaging)")
+endif()
+
+# Ensure DESTDIR-style behavior so install goes into CPACK_INSTALL_PREFIX rather than system locations
+set(CPACK_SET_DESTDIR "ON" CACHE BOOL "Use DESTDIR for packaging installs")
 
 # Ensure CPack will run install from the build tree when packaging
 # Format: <build-dir>;<project-name>;<component-to-install>;<config>
@@ -32,9 +37,9 @@ if(NOT DEFINED CPACK_INSTALL_CMAKE_PROJECTS)
 endif()
 
 # Force CPack to install into the build's install prefix to avoid requiring admin rights
-set(CPACK_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "CPack install prefix (override to control where project is installed during packaging)")
+#set(CPACK_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "CPack install prefix (override to control where project is installed during packaging)")
 # Ensure DESTDIR-style behavior so install goes into CPACK_INSTALL_PREFIX rather than system locations
-set(CPACK_SET_DESTDIR "ON" CACHE BOOL "Use DESTDIR for packaging installs" )
+#set(CPACK_SET_DESTDIR "ON" CACHE BOOL "Use DESTDIR for packaging installs" )
 
 # Only include bin/, lib/ and README.md from the build install prefix
 set(CPACK_INSTALLED_DIRECTORIES
