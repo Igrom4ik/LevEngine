@@ -24,7 +24,20 @@ set(CPACK_COMPONENT_UNSPECIFIED_REQUIRED "TRUE")
 set(CPACK_DEFAULT_PACKAGE_DESCRIPTION_FILE "C:/Program Files/CMake/share/cmake-4.1/Templates/CPack.GenericDescription.txt")
 set(CPACK_DEFAULT_PACKAGE_DESCRIPTION_SUMMARY "LevEngine built using CMake")
 set(CPACK_GENERATOR "")
-set(CPACK_IGNORE_FILES "/\.git/;\.gitignore$;\.gitmodules$;\.gitattributes$;\.vs/;\.vscode/;\.idea/;.*\.cpp$;.*\.c$;.*\.h$;.*\.hpp$;~$")
+set(CPACK_IGNORE_FILES
+    "/\\.git/"
+    "/\\.gitignore$"
+    "/\\.gitmodules$"
+    "/\\.gitattributes$"
+    "/\\.vs/"
+    "/\\.vscode/"
+    "/\\.idea/"
+    ".*\\.cpp$"
+    ".*\\.c$"
+    ".*\\.h$"
+    ".*\\.hpp$"
+    "~$"
+)
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY "OFF")
 set(CPACK_INNOSETUP_ARCHITECTURE "x64")
 set(CPACK_INSTALLED_DIRECTORIES "C:/DEVOPS/LevEngine;/")
@@ -62,7 +75,20 @@ set(CPACK_RPM_PACKAGE_SOURCES "ON")
 set(CPACK_SET_DESTDIR "OFF")
 set(CPACK_SOURCE_7Z "OFF")
 set(CPACK_SOURCE_GENERATOR "")
-set(CPACK_SOURCE_IGNORE_FILES "/\.git/;\.gitignore$;\.gitmodules$;\.gitattributes$;\.vs/;\.vscode/;\.idea/;.*\.cpp$;.*\.c$;.*\.h$;.*\.hpp$;~$")
+set(CPACK_SOURCE_IGNORE_FILES
+    "/\\.git/"
+    "/\\.gitignore$"
+    "/\\.gitmodules$"
+    "/\\.gitattributes$"
+    "/\\.vs/"
+    "/\\.vscode/"
+    "/\\.idea/"
+    ".*\\.cpp$"
+    ".*\\.c$"
+    ".*\\.h$"
+    ".*\\.hpp$"
+    "~$"
+)
 set(CPACK_SOURCE_INSTALLED_DIRECTORIES "C:/DEVOPS/LevEngine;/")
 set(CPACK_SOURCE_OUTPUT_CONFIG_FILE "C:/DEVOPS/LevEngine/cmake-ci/CPackSourceConfig.cmake")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "LevEngine-1.0.0-Source")
