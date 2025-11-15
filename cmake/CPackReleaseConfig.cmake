@@ -48,17 +48,18 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "LevEngine release package" CACHE STRING "
 # set(CPACK_COMPONENTS_ALL ALL)
 
 # Ignore patterns to exclude common source files from any source packaging
+# Use [.] for a literal dot to avoid ambiguous backslash escaping in generated CMake files
 set(CPACK_SOURCE_IGNORE_FILES
-    "/\\.git/"
-    "/\\.gitignore$"
-    "/\\.gitmodules$"
-    "/\\.gitattributes$"
-    "/\\.vs/"
-    "/\\.vscode/"
-    "/\\.idea/"
-    ".*\\.cpp$"
-    ".*\\.c$"
-    ".*\\.h$"
-    ".*\\.hpp$"
+    "/[.]git/"
+    "/[.]gitignore$"
+    "/[.]gitmodules$"
+    "/[.]gitattributes$"
+    "/[.]vs/"
+    "/[.]vscode/"
+    "/[.]idea/"
+    ".*[.]cpp$"
+    ".*[.]c$"
+    ".*[.]h$"
+    ".*[.]hpp$"
     "~$"
 )
