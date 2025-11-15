@@ -4,6 +4,16 @@ cmake_minimum_required(VERSION 3.31.6)
 set(PROJECT_VERSION "1.0.0" CACHE STRING "Project version (override with -DPROJECT_VERSION)")
 project(LevEngine VERSION ${PROJECT_VERSION} LANGUAGES CXX)
 
+# Ensure a safe install prefix for packaging (use build/install by default to avoid requiring admin privileges)
+if (NOT DEFINED CMAKE_INSTALL_PREFIX OR CMAKE_INSTALL_PREFIX STREQUAL "")
+  set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Install prefix for packaging" FORCE)
+endif()
+
+# Disable thirdparty 'install' targets early so FetchContent or added subprojects do not install headers into global prefix
+# These cache variables are read by glfw/glew CMakeLists to control installation behavior.
+set(GLFW_INSTALL OFF CACHE BOOL "Do not install GLFW into global install prefix" FORCE)
+set(GLEW_INSTALL OFF CACHE BOOL "Do not install GLEW into global install prefix" FORCE)
+
 # Ensure older third-party projects that use very old cmake_minimum_required can still be configured
 if (NOT DEFINED CMAKE_POLICY_VERSION_MINIMUM)
     set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "Allow configuring older projects requiring older CMake" FORCE)
@@ -57,6 +67,9 @@ if(LEVENGINE_FETCH_THIRDPARTY AND NOT LEVENGINE_USE_SUBMODULES)
     # Fallback handling for older archives that do not create modern targets is still performed below
     if(NOT TARGET glfw)
         if(DEFINED glfw_SOURCE_DIR)
+            # Do not install GLFW headers/libraries into our install tree when using FetchContent
+            # to keep release packages free of upstream source headers. The GLFW build supports GLFW_INSTALL option.
+            set(GLFW_INSTALL OFF CACHE BOOL "Do not install GLFW into global install prefix" FORCE)
             add_subdirectory(${glfw_SOURCE_DIR} "${CMAKE_CURRENT_BINARY_DIR}/glfw_build")
         endif()
     endif()
@@ -77,6 +90,8 @@ else()
     message(STATUS "LEVEngine: Using local vendor/ directories (not FetchContent or using submodules)")
     # Add local vendor directories if present
     if(EXISTS "${CMAKE_SOURCE_DIR}/vendor/glfw-3.4/CMakeLists.txt")
+        # prevent vendor glfw from installing headers into system install prefix
+        set(GLFW_INSTALL OFF CACHE BOOL "Do not install GLFW into global install prefix" FORCE)
         add_subdirectory(vendor/glfw-3.4 "${CMAKE_CURRENT_BINARY_DIR}/glfw_build")
     elseif(EXISTS "${CMAKE_SOURCE_DIR}/vendor/glfw-3.4")
         include_directories(vendor/glfw-3.4/include)
@@ -234,16 +249,52 @@ set(CPACK_SOURCE_GENERATOR "" CACHE STRING "No source generators" FORCE)
 include(CPack)
 
 # Helper targets
-add_custom_target(package-release
-    COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target install
-    COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target package
-    # Verify produced package to ensure no source files are included
-    # Use PowerShell script on Windows, POSIX shell script on others
-    COMMAND ${CMAKE_COMMAND} -E echo "Verifying produced package..."
-    $<$<PLATFORM_ID:Windows>:COMMAND powershell -ExecutionPolicy Bypass -File "${CMAKE_SOURCE_DIR}/scripts/check_package.ps1" "${CMAKE_BINARY_DIR}/package">
-    $<$<NOT:$<PLATFORM_ID:Windows>>:COMMAND "${CMAKE_SOURCE_DIR}/scripts/check_package.sh" "${CMAKE_BINARY_DIR}/package">
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-    COMMENT "Build, install, create release ZIP via CPack and verify package")
+if (WIN32)
+  add_custom_target(package-release
+      COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target install
+      # Clean up install tree to avoid packaging headers/docs from third-party libraries
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_PREFIX}/include"
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_PREFIX}/share"
+      COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target package
+      COMMAND ${CMAKE_COMMAND} -E echo "Verifying produced package..."
+      COMMAND powershell -ExecutionPolicy Bypass -File "${CMAKE_SOURCE_DIR}/scripts/check_package.ps1" "${CMAKE_BINARY_DIR}/package"
+      WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+      COMMENT "Build, install and create release ZIP via CPack and verify package (Windows)")
+else()
+  add_custom_target(package-release
+      COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target install
+      # Clean up install tree to avoid packaging headers/docs from third-party libraries
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_PREFIX}/include"
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_PREFIX}/share"
+      COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target package
+      COMMAND ${CMAKE_COMMAND} -E echo "Verifying produced package..."
+      COMMAND "${CMAKE_SOURCE_DIR}/scripts/check_package.sh" "${CMAKE_BINARY_DIR}/package"
+      WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+      COMMENT "Build, install and create release ZIP via CPack and verify package (POSIX)")
+endif()
+
+# package-clean: install -> remove include/share -> create sanitized archive using scripts/pack_clean
+if (WIN32)
+  add_custom_target(package-clean
+      COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target install
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_PREFIX}/include"
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_PREFIX}/share"
+      COMMAND powershell -ExecutionPolicy Bypass -File "${CMAKE_SOURCE_DIR}/scripts/pack_clean.ps1" "${CMAKE_INSTALL_PREFIX}" "${CMAKE_BINARY_DIR}/package" "${CPACK_PACKAGE_FILE_NAME}-Windows.zip"
+      COMMAND ${CMAKE_COMMAND} -E echo "Verifying produced package..."
+      COMMAND powershell -ExecutionPolicy Bypass -File "${CMAKE_SOURCE_DIR}/scripts/check_package.ps1" "${CMAKE_BINARY_DIR}/package"
+      WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+      COMMENT "Install, produce sanitized ZIP and verify (Windows)")
+else()
+  add_custom_target(package-clean
+      COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target install
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_PREFIX}/include"
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_PREFIX}/share"
+      COMMAND "${CMAKE_SOURCE_DIR}/scripts/pack_clean.sh" "${CMAKE_INSTALL_PREFIX}" "${CMAKE_BINARY_DIR}/package" "${CPACK_PACKAGE_FILE_NAME}-Linux.zip"
+      COMMAND ${CMAKE_COMMAND} -E echo "Verifying produced package..."
+      COMMAND "${CMAKE_SOURCE_DIR}/scripts/check_package.sh" "${CMAKE_BINARY_DIR}/package"
+      WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+      COMMENT "Install, produce sanitized ZIP and verify (POSIX)")
+endif()
 
 add_custom_target(print-version
     COMMAND ${CMAKE_COMMAND} -E echo "LevEngine version: ${PROJECT_VERSION}"

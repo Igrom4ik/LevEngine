@@ -16,6 +16,18 @@ if (-not $zip) {
 }
 Write-Host "Found package: $($zip.FullName)"
 
+Write-Host "Archive listing:"
+if ($has7z) {
+    & 7z l -ba $zip.FullName | ForEach-Object { Write-Host $_ }
+} elseif ($zip.Extension -eq ".zip") {
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $zipArchive = [System.IO.Compression.ZipFile]::OpenRead($zip.FullName)
+    foreach ($entry in $zipArchive.Entries) { Write-Host $entry.FullName }
+    $zipArchive.Dispose()
+} else {
+    & tar -tzf $zip.FullName 2>$null | ForEach-Object { Write-Host $_ }
+}
+
 # Use 7zip if available, otherwise use System.IO.Compression for zip
 $has7z = (Get-Command 7z -ErrorAction SilentlyContinue) -ne $null
 $containsSources = $false
@@ -57,4 +69,3 @@ if (-not $containsReadme) {
 }
 Write-Host "Package verification passed: no source files, README.md present"
 exit 0
-
