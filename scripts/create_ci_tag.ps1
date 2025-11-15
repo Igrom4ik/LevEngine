@@ -1,24 +1,17 @@
 # scripts/create_ci_tag.ps1
 # Создаёт аннотированный CI-тег на основе версии в CMakeLists.txt и short SHA текущего коммита, затем пушит его в origin.
-try
-{
-    $cm = Get-Content -Path "CMakeLists.txt" -Raw -ErrorAction Stop
-}
-catch
-{
-    Write-Error "Не удалось прочитать CMakeLists.txt: $_"
-    exit 1
-}
+$cm = Get-Content -Path "CMakeLists.txt" -Raw -ErrorAction Stop
 $ver = '0.0.0'
-if ($cm -match 'project\s*\(\s*HuyEngine\s+VERSION\s+([0-9]+\.[0-9]+\.[0-9]+)')
-{
+# Try to match set(PROJECT_VERSION "1.2.3") first
+if ($cm -match 'set\s*\(\s*PROJECT_VERSION\s+"?([0-9]+\.[0-9]+\.[0-9]+)"?') {
+    $ver = $matches[1]
+} elseif ($cm -match 'project\s*\(\s*[^\s]+\s+VERSION\s+([0-9]+\.[0-9]+\.[0-9]+)') {
     $ver = $matches[1]
 }
 $sha = (git rev-parse --short HEAD) -replace '\r|\n', ''
 $tag = "v${ver}-ci-${sha}"
-# ensure tag is valid and unique
-if (git tag -l $tag)
-{
+# ensure tag is unique; if exists, append timestamp
+if (git tag -l $tag) {
     $tag = "v${ver}-ci-${sha}-$( Get-Date -Format yyyyMMddHHmmss )"
 }
 Write-Host "Creating tag: $tag"
@@ -31,4 +24,3 @@ if ($LASTEXITCODE -ne 0)
 }
 Write-Host "Created and pushed tag: $tag"
 exit 0
-
