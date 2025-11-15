@@ -47,3 +47,4 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "LevEngine release package" CACHE STRING "
 # Do not force component handling here
 # set(CPACK_COMPONENTS_ALL ALL)
 
+set(CPACK_SOURCE_IGNORE_FILES "/\\.git/;\\.gitignore$;\\.gitmodules$;\\.gitattributes$;\\.vs/;\\.vscode/;\\.idea/;.*\\.cpp$;.*\\.c$;.*\\.h$;.*\\.hpp$;~$")
