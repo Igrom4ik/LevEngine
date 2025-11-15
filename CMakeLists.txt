@@ -129,11 +129,17 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_SUPPRESS_REGENERATION TRUE)
 
+# Ensure no source files (*.cpp, *.h) are included in the package
+# Avoid using install(DIRECTORY ...) that picks up sources
+
 # Install the main executable so CPack can package it
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 
 # Install README so packages include project README at top-level
 install(FILES "${CMAKE_SOURCE_DIR}/README.md" DESTINATION .)
+
+# Explicitly install only necessary runtime/data files
+# Add other runtime/data files as needed, but exclude source files
 
 # Load release-specific CPack defaults if present
 if (EXISTS "${CMAKE_SOURCE_DIR}/cmake/CPackReleaseConfig.cmake")
