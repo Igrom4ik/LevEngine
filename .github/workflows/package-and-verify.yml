@@ -21,7 +21,7 @@ jobs:
       # Install dependencies required before Configure step
       - name: Install wayland-dev (Linux only)
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y wayland-dev
+        run: sudo apt-get update && sudo apt-get install -y libwayland-dev
         shell: bash
 
       - name: Set version (from tag if present)
