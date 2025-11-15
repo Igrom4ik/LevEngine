@@ -241,10 +241,22 @@ set(CPACK_INSTALLED_DIRECTORIES
     "${CMAKE_INSTALL_PREFIX}/README.md;."
     CACHE STRING "Directories to include in CPack package" FORCE)
 
-# Disable source generators and ensure we do not accidentally create a source package
-set(CPACK_SOURCE_ZIP OFF CACHE BOOL "Disable CPack source ZIP generation" FORCE)
-set(CPACK_SOURCE_7Z OFF CACHE BOOL "Disable CPack source 7z generation" FORCE)
-set(CPACK_SOURCE_GENERATOR "" CACHE STRING "No source generators" FORCE)
+# Explicitly set CPACK_SOURCE_IGNORE_FILES with properly escaped backslashes
+# Use double-escaped backslashes so generated CPackConfig.cmake contains valid CMake string literals
+set(CPACK_SOURCE_IGNORE_FILES
+    "/\\\.git/"
+    "/\\\.gitignore$"
+    "/\\\.gitmodules$"
+    "/\\\.gitattributes$"
+    "/\\\.vs/"
+    "/\\\.vscode/"
+    "/\\\.idea/"
+    ".*\\\.cpp$"
+    ".*\\\.c$"
+    ".*\\\.h$"
+    ".*\\\.hpp$"
+    "~$"
+    CACHE STRING "Files to ignore for CPack source packages" FORCE)
 
 include(CPack)
 
