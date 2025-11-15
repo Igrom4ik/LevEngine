@@ -12,21 +12,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest ]
+        os: [ windows-latest ]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      # Install dependencies required before Configure step
-      - name: Install Linux build dependencies (Ubuntu only)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            libwayland-dev libxkbcommon-dev libxkbcommon-x11-dev libx11-dev libxrandr-dev libxi-dev libxcursor-dev libxinerama-dev libglu1-mesa-dev libasound2-dev libpulse-dev libudev-dev pkg-config wayland-protocols
-          sudo rm -rf /var/lib/apt/lists/*
-        shell: bash
 
       - name: Set version (from tag if present)
         id: set_version
@@ -41,32 +31,6 @@ jobs:
           fi
         shell: bash
 
-      - name: Configure (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: |
-          if [ -n "${{ steps.set_version.outputs.version }}" ]; then
-            echo "Configuring with version ${{ steps.set_version.outputs.version }}"
-            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPROJECT_VERSION="${{ steps.set_version.outputs.version }}" -DCPACK_PACKAGE_VERSION="${{ steps.set_version.outputs.version }}" -DCPACK_GENERATOR=ZIP -DGLFW_BUILD_WAYLAND=OFF -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/staging
-          else
-            echo "Configuring without explicit version (use project() default)"
-            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR=ZIP -DGLFW_BUILD_WAYLAND=OFF -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/staging
-          fi
-
-      - name: Debug staging contents (before package)
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: |
-          echo "=== Checking if README.md exists in repo ==="
-          ls -la README.md || echo "README.md NOT FOUND in repo root"
-
-          echo "=== Checking staging directory (may not exist until install) ==="
-          if [ -d "${{ github.workspace }}/staging" ]; then
-            find "${{ github.workspace }}/staging" -type f -maxdepth 4 -print || true
-          else
-            echo "Staging directory does not exist yet"
-          fi
-
       - name: Configure (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
@@ -79,34 +43,15 @@ jobs:
             cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCPACK_GENERATOR=ZIP -DCMAKE_INSTALL_PREFIX="$env:GITHUB_WORKSPACE\staging"
           }
 
-      - name: Build (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: cmake --build build --config Release --parallel
-
       - name: Build (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: cmake --build build --config Release -- /m
 
-      - name: Install into staging (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: cmake --install build --config Release --prefix ${{ github.workspace }}/staging
-
-      - name: List staging (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: |
-          echo "Staging listing:"
-          ls -la "${{ github.workspace }}/staging" || true
-          echo "Staging recursive (up to depth 3):"
-          find "${{ github.workspace }}/staging" -maxdepth 3 -type f -print || true
-
       - name: Install into staging (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
-        run: cmake --install build --config Release --prefix "$env:GITHUB_WORKSPACE\staging"
+        run: cmake --install build --config Release
 
       - name: List staging (Windows)
         if: matrix.os == 'windows-latest'
@@ -115,33 +60,12 @@ jobs:
           Write-Host "Staging listing:"
           Get-ChildItem -Path "$env:GITHUB_WORKSPACE\staging" -Recurse -Force -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
 
-      - name: Run packaging (CPack) (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: |
-          # Prefer calling package target from build directory so CPack uses generated CPack configs
-          cmake --build build --config Release --target package || (echo "package target failed; listing build tree" && ls -la build || true; exit 1)
-          ls -la build/package || true
-
       - name: Run packaging (CPack) (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
           # Run package target from build directory so CPack uses the generated CPackConfig.cmake
           cmake --build build --config Release --target package
-
-      - name: Locate produced ZIP (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: |
-          echo "Looking for ZIP files under build/ and build/package/"
-          ls -la build || true
-          ls -la build/package || true
-          ZIP=$(ls build/*.zip 2>/dev/null || ls build/package/*.zip 2>/dev/null || true)
-          if [ -z "$ZIP" ]; then
-            echo "No ZIP produced in expected locations"; exit 1
-          fi
-          echo "ZIP found: $ZIP"
 
       - name: Locate produced ZIP (Windows)
         if: matrix.os == 'windows-latest'
@@ -151,40 +75,6 @@ jobs:
           if (-not $zip) { $zip = Get-ChildItem -Path build\package\*.zip -ErrorAction SilentlyContinue | Select-Object -First 1 }
           if (-not $zip) { Write-Error "ZIP not found"; exit 1 }
           Write-Host "ZIP found: $($zip.FullName)"
-
-      - name: Verify package contents (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: |
-          ZIP=$(ls build/*.zip 2>/dev/null || ls build/package/*.zip 2>/dev/null || true)
-          if [ -z "$ZIP" ]; then echo "ZIP not found"; exit 1; fi
-
-          # ===== FIX: Skip header/footer from unzip -l output =====
-          # unzip -l format:
-          #   Archive:  build/LevEngine-1.0.0-Linux.zip
-          #     Length      Date    Time    Name
-          #   ---------  ---------- -----   ----
-          #        0  2025-11-15 14:02   bin/
-          #     1234  2025-11-15 14:02   bin/LevEngine
-          #        0  2025-11-15 14:02   README.md
-          #   ---------                     -------
-          #     1234                     3 files
-          #
-          # We need only the "Name" column (lines between the two ----- separators).
-          # tail -n +4: skip first 3 lines (Archive:, Length/Date/Time/Name header, first ----)
-          # head -n -2: remove last 2 lines (final ----, "X files" summary)
-          unzip -l "$ZIP" | tail -n +4 | head -n -2 | awk '{print $NF}' | sed 's/\r$//' | grep -v '^$' > contents.txt
-
-          echo "Archive listing (names only):"
-          cat contents.txt
-
-          grep -q -E '(^|/)(README\.md)$' contents.txt || (echo "README.md not found in archive" && exit 1)
-          grep -q -E '(^|/)(bin/)' contents.txt || (echo "bin/ not found in archive" && exit 1)
-
-          # Fail if any *.cpp or *.h exist in archive listing
-          if grep -Ei '\.cpp$|\.h$' contents.txt; then
-            echo "Source files (*.cpp or *.h) found in archive"; exit 1
-          fi
 
       - name: Verify package contents (Windows)
         if: matrix.os == 'windows-latest'
@@ -198,11 +88,9 @@ jobs:
           New-Item -ItemType Directory -Path $out | Out-Null
           Expand-Archive -Path $zip.FullName -DestinationPath $out -Force
 
-          # Helper to find a file either at top-level or inside a single top-level directory
           function Find-InPackage($relPath) {
             $rootPath = Join-Path $out $relPath
             if (Test-Path $rootPath) { return $rootPath }
-            # If archive created a single top-level directory, check inside it
             $dirs = Get-ChildItem -Path $out -Directory -ErrorAction SilentlyContinue
             if ($dirs -and $dirs.Count -eq 1) {
               $candidate = Join-Path $dirs[0].FullName $relPath
