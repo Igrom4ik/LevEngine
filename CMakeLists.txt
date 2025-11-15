@@ -218,27 +218,18 @@ endif()
 # Force CPACK_PACKAGE_FILE_NAME to use resolved values (use resolved_project_version directly to avoid truncation)
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${_resolved_project_version}-${CMAKE_SYSTEM_NAME}" CACHE STRING "CPack output file name" FORCE)
 
-# Disable source package generation to avoid packaging repository source files into release archives
+# Ensure CPack packages only the installed runtime artifacts (bin, lib) and README
+# Force this into the cache so that build-time generated CPack files honor it.
+set(CPACK_INSTALLED_DIRECTORIES
+    "${CMAKE_INSTALL_PREFIX}/bin;bin"
+    "${CMAKE_INSTALL_PREFIX}/lib;lib"
+    "${CMAKE_INSTALL_PREFIX}/README.md;."
+    CACHE STRING "Directories to include in CPack package" FORCE)
+
+# Disable source generators and ensure we do not accidentally create a source package
 set(CPACK_SOURCE_ZIP OFF CACHE BOOL "Disable CPack source ZIP generation" FORCE)
 set(CPACK_SOURCE_7Z OFF CACHE BOOL "Disable CPack source 7z generation" FORCE)
-# Ensure source generators list is empty (safe guard)
 set(CPACK_SOURCE_GENERATOR "" CACHE STRING "No source generators" FORCE)
-# Ignore patterns to exclude common source files from any source packaging
-# Use CMake list of patterns and double-escape dots (\\.) for regex literals.
-set(CPACK_SOURCE_IGNORE_FILES
-    "/\\.git/"
-    "/\\.gitignore$"
-    "/\\.gitmodules$"
-    "/\\.gitattributes$"
-    "/\\.vs/"
-    "/\\.vscode/"
-    "/\\.idea/"
-    ".*\\.cpp$"
-    ".*\\.c$"
-    ".*\\.h$"
-    ".*\\.hpp$"
-    "~$"
-    CACHE STRING "Files to ignore when creating source packages" FORCE)
 
 include(CPack)
 
@@ -246,8 +237,13 @@ include(CPack)
 add_custom_target(package-release
     COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target install
     COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --config Release --target package
+    # Verify produced package to ensure no source files are included
+    # Use PowerShell script on Windows, POSIX shell script on others
+    COMMAND ${CMAKE_COMMAND} -E echo "Verifying produced package..."
+    $<$<PLATFORM_ID:Windows>:COMMAND powershell -ExecutionPolicy Bypass -File "${CMAKE_SOURCE_DIR}/scripts/check_package.ps1" "${CMAKE_BINARY_DIR}/package">
+    $<$<NOT:$<PLATFORM_ID:Windows>>:COMMAND "${CMAKE_SOURCE_DIR}/scripts/check_package.sh" "${CMAKE_BINARY_DIR}/package">
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-    COMMENT "Build, install and create release ZIP via CPack")
+    COMMENT "Build, install, create release ZIP via CPack and verify package")
 
 add_custom_target(print-version
     COMMAND ${CMAKE_COMMAND} -E echo "LevEngine version: ${PROJECT_VERSION}"
