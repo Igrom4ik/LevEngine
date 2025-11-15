@@ -19,9 +19,13 @@ jobs:
         uses: actions/checkout@v4
 
       # Install dependencies required before Configure step
-      - name: Install wayland-dev (Linux only)
+      - name: Install Linux build dependencies (Ubuntu only)
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y libwayland-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwayland-dev libxkbcommon-dev libxkbcommon-x11-dev libx11-dev libxrandr-dev libxi-dev libxcursor-dev libxinerama-dev libglu1-mesa-dev libasound2-dev libpulse-dev libudev-dev pkg-config
+          sudo rm -rf /var/lib/apt/lists/*
         shell: bash
 
       - name: Set version (from tag if present)
@@ -96,8 +100,23 @@ jobs:
           Remove-Item -Recurse -Force $out -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Path $out | Out-Null
           Expand-Archive -Path $zip.FullName -DestinationPath $out -Force
-          if (-not (Test-Path (Join-Path $out "README.md"))) { Write-Error "README.md missing in package"; exit 1 }
-          if (-not (Test-Path (Join-Path $out "bin"))) { Write-Error "bin/ missing in package"; exit 1 }
+
+          # Helper to find a file either at top-level or inside a single top-level directory
+          function Find-InPackage($relPath) {
+            $rootPath = Join-Path $out $relPath
+            if (Test-Path $rootPath) { return $rootPath }
+            # If archive created a single top-level directory, check inside it
+            $dirs = Get-ChildItem -Path $out -Directory -ErrorAction SilentlyContinue
+            if ($dirs -and $dirs.Count -eq 1) {
+              $candidate = Join-Path $dirs[0].FullName $relPath
+              if (Test-Path $candidate) { return $candidate }
+            }
+            return $null
+          }
+
+          if (-not (Find-InPackage "README.md")) { Write-Error "README.md missing in package"; exit 1 }
+          if (-not (Find-InPackage "bin")) { Write-Error "bin/ missing in package"; exit 1 }
+
           $src = Get-ChildItem -Path $out -Recurse -Include *.cpp,*.h -ErrorAction SilentlyContinue
           if ($src) { Write-Error "Source files (*.cpp/*.h) found in package"; $src | Select-Object FullName -First 20 | ForEach-Object { Write-Output $_.FullName }; exit 1 }
 

@@ -132,12 +132,17 @@ set(CMAKE_SUPPRESS_REGENERATION TRUE)
 # Install the main executable so CPack can package it
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 
+# Install README so packages include project README at top-level
+install(FILES "${CMAKE_SOURCE_DIR}/README.md" DESTINATION .)
+
 # Load release-specific CPack defaults if present
 if (EXISTS "${CMAKE_SOURCE_DIR}/cmake/CPackReleaseConfig.cmake")
     include("${CMAKE_SOURCE_DIR}/cmake/CPackReleaseConfig.cmake")
 endif()
 
 # Ensure CPack module is loaded (generates 'package' target)
+# Disable wrapping files into a top-level directory inside the ZIP so README.md appears at archive root
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 include(CPack)
 
 # Helper target: build, install into CMAKE_INSTALL_PREFIX and then run package
