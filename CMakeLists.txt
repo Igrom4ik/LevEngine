@@ -285,7 +285,10 @@ set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${_resolved_project_version}-
 set(CPACK_INSTALLED_DIRECTORIES
     "${CPACK_INSTALL_PREFIX}/bin;bin"
     "${CPACK_INSTALL_PREFIX}/lib;lib"
-    "${CPACK_INSTALL_PREFIX}/README.md;."
+    # Do not list README.md as a source path (absolute file paths with drive letters
+    # can confuse CPack on Windows). Include the install prefix root so installed
+    # files (including README.md copied by install(FILES ...)) are packaged.
+    "${CPACK_INSTALL_PREFIX};."
     CACHE STRING "Directories to include in CPack package" FORCE)
 
 # Explicitly set CPACK_SOURCE_IGNORE_FILES using character class for literal dot to avoid escape issues
