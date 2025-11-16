@@ -35,6 +35,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_SUPPRESS_REGENERATION TRUE)
 
+add_subdirectory(Engine)
+
 ## Engine library is responsible for linking vendor libs (GLFW/GLEW etc.)
 add_executable(LevEngineApp ${CMAKE_SOURCE_DIR}/main.cpp)
 

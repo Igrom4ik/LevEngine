@@ -9,8 +9,8 @@ configure_file(EngineConfig.h.template ${CMAKE_CURRENT_BINARY_DIR}/EngineConfig.
 set(ENGINE_SOURCES
         Source/Core/Engine.cpp
         Source/Core/Engine.hpp
-        Source/Core/EngineEvents.cpp
-        Source/Core/EngineEvents.hpp
+        Source/Core/Application.cpp
+        Source/Core/Application.hpp
         ${CMAKE_CURRENT_BINARY_DIR}/EngineConfig.h
 )
 
@@ -18,12 +18,25 @@ add_library(${PROJECT_NAME}Lib STATIC ${ENGINE_SOURCES})
 target_include_directories(${PROJECT_NAME}Lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Source ${CMAKE_CURRENT_BINARY_DIR})
 
 # --- Vendor libraries (moved from top-level CMakeLists) ---
-set(VENDOR_DIR "${CMAKE_SOURCE_DIR}/vendor")
+# Allow overriding vendor directory from cache/preset
+set(ENGINE_VENDOR_DIR "" CACHE PATH "Explicit path to Engine's vendor directory (overrides auto-detection)")
+
+if (ENGINE_VENDOR_DIR)
+    set(VENDOR_DIR "${ENGINE_VENDOR_DIR}")
+elseif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vendor")
+    set(VENDOR_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vendor")
+else()
+    set(VENDOR_DIR "${CMAKE_SOURCE_DIR}/vendor")
+endif()
+
+message(STATUS "VENDOR: using VENDOR_DIR=${VENDOR_DIR} (ENGINE_VENDOR_DIR=${ENGINE_VENDOR_DIR})")
 
 # Expose GLEW includes to consumers of the engine library if available
 if (EXISTS "${VENDOR_DIR}/glew/include")
     target_include_directories(${PROJECT_NAME}Lib PUBLIC "${VENDOR_DIR}/glew/include")
     message(STATUS "VENDOR: added ${VENDOR_DIR}/glew/include to ${PROJECT_NAME}Lib include paths")
+else()
+    message(STATUS "VENDOR: glew include dir not found at ${VENDOR_DIR}/glew/include")
 endif()
 
 # GLFW: prefer a cloned copy under vendor/ or FetchContent fallback
@@ -33,9 +46,12 @@ set(VENDOR_GLFW_GIT_TAG "3.3.8" CACHE STRING "GLFW git tag or commit to checkout
 
 if (VENDOR_GLFW_USE_CLONE)
     set(_glfw_dir "${VENDOR_DIR}/glfw")
+    message(STATUS "VENDOR: checking for GLFW in ${_glfw_dir}")
     if (EXISTS "${_glfw_dir}/CMakeLists.txt")
+        message(STATUS "VENDOR: adding GLFW subdirectory from ${_glfw_dir}")
         add_subdirectory("${_glfw_dir}" "${CMAKE_CURRENT_BINARY_DIR}/vendor_glfw_build")
     elseif (VENDOR_GLFW_FROM_GIT)
+        message(STATUS "VENDOR: GLFW not found locally, will FetchContent")
         include(FetchContent)
         FetchContent_Declare(
             glfw
@@ -60,17 +76,23 @@ endif()
 
 # Link vendor libraries to engine library if targets are present
 if (TARGET glfw)
+    message(STATUS "VENDOR: target 'glfw' exists; linking to ${PROJECT_NAME}Lib")
     target_link_libraries(${PROJECT_NAME}Lib PRIVATE glfw)
+else()
+    message(STATUS "VENDOR: target 'glfw' not found; GLFW will not be linked")
 endif()
 
 # GLEW: try to build as CMake subdir or use prebuilt/imported libs
 set(GLEW_SEARCH_CANDIDATES
     "${VENDOR_DIR}/glew"
+    "${CMAKE_CURRENT_SOURCE_DIR}/vendor/glew"
     "${CMAKE_SOURCE_DIR}/thirdparty/glew"
+    "${CMAKE_SOURCE_DIR}/thirdparty"
 )
 set(_glew_target_found OFF)
 foreach(_gpath IN LISTS GLEW_SEARCH_CANDIDATES)
     if (EXISTS "${_gpath}/build/cmake/CMakeLists.txt")
+        message(STATUS "VENDOR: found glew cmake in ${_gpath}/build/cmake, adding subdirectory")
         add_subdirectory("${_gpath}/build/cmake" "${CMAKE_CURRENT_BINARY_DIR}/vendor_glew_build")
         if (TARGET glew_s)
             set(_glew_target_found glew_s)
@@ -84,16 +106,19 @@ endforeach()
 if (NOT _glew_target_found)
     foreach(_gpath IN LISTS GLEW_SEARCH_CANDIDATES)
         if (EXISTS "${_gpath}/include")
+            message(STATUS "VENDOR: found glew include in ${_gpath}/include")
             set(_glew_include_dir "${_gpath}/include")
             set(_glew_lib_x64 "${_gpath}/lib/Release/x64/glew32s.lib")
             set(_glew_lib_x64_dyn "${_gpath}/lib/Release/x64/glew32.lib")
             if (EXISTS "${_glew_lib_x64}")
+                message(STATUS "VENDOR: found static glew lib at ${_glew_lib_x64}")
                 add_library(glew_s STATIC IMPORTED)
                 set_target_properties(glew_s PROPERTIES IMPORTED_LOCATION "${_glew_lib_x64}")
                 target_include_directories(glew_s INTERFACE "${_glew_include_dir}")
                 set(_glew_target_found glew_s)
                 break()
             elseif (EXISTS "${_glew_lib_x64_dyn}")
+                message(STATUS "VENDOR: found shared glew lib at ${_glew_lib_x64_dyn}")
                 add_library(glew STATIC IMPORTED)
                 set_target_properties(glew PROPERTIES IMPORTED_LOCATION "${_glew_lib_x64_dyn}")
                 target_include_directories(glew INTERFACE "${_glew_include_dir}")
@@ -105,7 +130,10 @@ if (NOT _glew_target_found)
 endif()
 
 if (DEFINED _glew_target_found AND NOT _glew_target_found STREQUAL "OFF")
+    message(STATUS "VENDOR: linking ${_glew_target_found} into ${PROJECT_NAME}Lib")
     target_link_libraries(${PROJECT_NAME}Lib PRIVATE ${_glew_target_found})
+else()
+    message(STATUS "VENDOR: no GLEW target found; GLEW will not be linked")
 endif()
 
 # folders
