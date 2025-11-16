@@ -33,6 +33,11 @@
         "jetbrains.com/clion": {
           "toolchain": "Visual Studio"
         }
+      },
+      "cacheVariables": {
+        "VENDOR_GLFW_FROM_GIT": "ON",
+        "VENDOR_GLFW_USE_CLONE": "OFF",
+        "VENDOR_GLFW_GIT_TAG": "3.3.8"
       }
     },
     {
