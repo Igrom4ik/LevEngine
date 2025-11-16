@@ -34,7 +34,13 @@ int main()
 	glfwSetWindowPos(window, 2000, 150);
     glfwMakeContextCurrent(window);
     
-    if(glewInit() != GLEW_OK)
+    // Initialize GLEW (must be done after creating an OpenGL context)
+    glewExperimental = GL_TRUE; // enable experimental features for core contexts
+    if (glewInit() != GLEW_OK) {
+        std::cerr << "Failed to initialize GLEW" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
 
 	// Main loop
 	while (!glfwWindowShouldClose(window)) {
