@@ -208,6 +208,15 @@ endif()
 # --- Application target ---
 add_executable(LevEngineApp ${CMAKE_SOURCE_DIR}/main.cpp)
 
+# If GLEW wasn't configured as a target but headers exist in vendor/glew/include,
+# expose that include directory to the application so <GL/glew.h> can be found.
+# NOTE: add include dir regardless of whether GLEW created a target — linking
+# may happen after includes are required during compile.
+if (EXISTS "${VENDOR_DIR}/glew/include")
+    target_include_directories(LevEngineApp PRIVATE "${VENDOR_DIR}/glew/include")
+    message(STATUS "VENDOR: added ${VENDOR_DIR}/glew/include to LevEngineApp include paths")
+endif()
+
 # link vendor libraries if available
 if (TARGET glfw)
     target_link_libraries(LevEngineApp PRIVATE glfw)
