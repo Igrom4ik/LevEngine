@@ -1,0 +1,30 @@
+-- VENDOR: using VENDOR_DIR=D:/DEVELOP/LevEngine/Engine/vendor (ENGINE_VENDOR_DIR=D:/DEVELOP/LevEngine/Engine/vendor)
+-- VENDOR: added D:/DEVELOP/LevEngine/Engine/vendor/glew/include to LevEngineLib include paths
+-- Could NOT find Doxygen (missing: DOXYGEN_EXECUTABLE) 
+-- Using Win32 for window creation
+-- VENDOR: target 'glfw' exists; linking to LevEngineLib
+-- VENDOR: found glew cmake in D:/DEVELOP/LevEngine/Engine/vendor/glew/build/cmake, adding subdirectory
+CMake Deprecation Warning at Engine/vendor/glew/build/cmake/CMakeLists.txt:7 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- VENDOR: linking glew_s into LevEngineLib
+-- Generated EngineConfig.h -> D:/DEVELOP/LevEngine/cmake-build-release/EngineConfig.h
+=================== System info ===================
+Running on Windows
+Using MSVC compiler
+MSVC version: 1950
+MSVC toolset version: 145
+Compiler flags: /DWIN32 /D_WINDOWS /EHsc
+Compiler debug flags: /Ob0 /Od /RTC1
+Compiler release flags: /O2 /Ob2 /DNDEBUG
+Configuration types: 
+===================================================
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: D:/DEVELOP/LevEngine/cmake-build-release
