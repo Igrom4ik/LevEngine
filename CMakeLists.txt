@@ -37,14 +37,8 @@ set(CMAKE_SUPPRESS_REGENERATION TRUE)
 
 add_subdirectory(Engine)
 
-## Engine library is responsible for linking vendor libs (GLFW/GLEW etc.)
-add_executable(LevEngineApp ${CMAKE_SOURCE_DIR}/main.cpp)
-
-# Link application with engine library
-target_link_libraries(LevEngineApp PRIVATE ${PROJECT_NAME}Lib)
-
-# ensure app sees generated headers in build dir if any
-target_include_directories(LevEngineApp PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+# Add application subdirectory which creates LevEngineApp from App/Source
+add_subdirectory(App)
 
 # Generate EngineConfig.h from template into build dir so the app can include it
 if (EXISTS "${CMAKE_SOURCE_DIR}/EngineConfig.h.template")

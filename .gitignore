@@ -52,26 +52,13 @@ build-dist/
 # Keep docs in repo (moved to docs/)
 !docs/
 
-# Ignore PVS-Studio analyzer data and reports
-/.PVS-Studio/
-PVS-Studio.log
-PVS-Studio.cfg
-PVS-Studio.json
-PVS-Studio.tasks
-PVS-Studio.reports/
-*.pvslog
-*.pvsconfig
-
 # Ignore common temp/editor files
 *.tmp*
 *~
 *.swp
 *.swo
 
-# Ignore PVS-Studio temporary/generation files often created near sources
-*.PVS-Studio.*
-**/*.PVS-Studio.*
-App/Source/*.PVS-Studio.i
+# PVS-Studio entries removed per request
 
 # Ignore FetchContent/_deps directories created by CMake
 _deps/
