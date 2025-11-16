@@ -2,7 +2,6 @@
 
 [![Документация: GitHub Copilot](https://img.shields.io/badge/Документация-GitHub%20Copilot-blue?logo=github)](https://github.com/features/copilot)
 [![Windows Build](https://github.com/YOUR_USERNAME/LevEngine/actions/workflows/windows-build.yml/badge.svg)](https://github.com/YOUR_USERNAME/LevEngine/actions/workflows/windows-build.yml)
-[![Linux Build](https://github.com/YOUR_USERNAME/LevEngine/actions/workflows/linux-build.yml/badge.svg)](https://github.com/YOUR_USERNAME/LevEngine/actions/workflows/linux-build.yml)
 [![Clang-format check](https://github.com/YOUR_USERNAME/LevEngine/actions/workflows/clang-format-checker.yml/badge.svg)](https://github.com/YOUR_USERNAME/LevEngine/actions/workflows/clang-format-checker.yml)
 
 Custom Game Engine built with C++ and CMake.
@@ -29,7 +28,7 @@ Automation\build.bat run        # Run
 
 - 🎮 **Interactive menu** - no need to remember commands
 - 🛠️ **Multiple IDEs** - Visual Studio, CLion, VSCode support
-- ⚡ **Fast builds** - Ninja, MSBuild, Unix Makefiles
+- ⚡ **Fast builds** - Ninja, MSBuild
 - 📁 **Smart folders** - separate folders per configuration
 - 🔍 **Auto-detection** - finds CMake, Ninja, Visual Studio automatically
 
@@ -53,7 +52,6 @@ choco install python cmake ninja
 Project uses GitHub Actions for continuous integration:
 
 - ✅ **Windows Build** - MSVC compilation (Debug/Release)
-- ✅ **Linux Build** - GCC 13 & Clang 18 compilation
 - ✅ **Clang-format Check** - Code style validation
 
 All workflows run automatically on push/PR to `master` branch. See [.github/workflows/](.github/workflows/) for details.
