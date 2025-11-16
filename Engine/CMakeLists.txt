@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 3.31.6)
 # version
 set(LevEngine_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
 set(LevEngine_VERSION_MINOR ${PROJECT_VERSION_MINOR})
@@ -8,6 +9,8 @@ configure_file(EngineConfig.h.template ${CMAKE_CURRENT_BINARY_DIR}/EngineConfig.
 set(ENGINE_SOURCES
         Source/Core/Engine.cpp
         Source/Core/Engine.hpp
+        Source/Core/EngineEvents.cpp
+        Source/Core/EngineEvents.hpp
         ${CMAKE_CURRENT_BINARY_DIR}/EngineConfig.h
 )
 
