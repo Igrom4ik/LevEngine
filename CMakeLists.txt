@@ -38,6 +38,12 @@ set(CMAKE_SUPPRESS_REGENERATION TRUE)
 # --- Vendor libraries ---
 set(VENDOR_DIR "${CMAKE_SOURCE_DIR}/vendor")
 
+# Ensure IDEs see vendor includes (helps CLion indexer find headers like <GL/glew.h>)
+if (EXISTS "${VENDOR_DIR}/glew/include")
+    include_directories("${VENDOR_DIR}/glew/include")
+    message(STATUS "VENDOR: added ${VENDOR_DIR}/glew/include to global include paths for IDE/indexer")
+endif()
+
 # GLFW via Git clone (safer) or FetchContent
 option(VENDOR_GLFW_USE_CLONE "Clone GLFW into ${VENDOR_DIR}/glfw via git (safer)" ON)
 option(VENDOR_GLFW_FROM_GIT "Use FetchContent to get GLFW from GitHub" OFF)
