@@ -99,8 +99,8 @@ Usage examples:
     parser.add_argument(
         '-p', '--platform',
         type=str,
-        choices=['x64', 'win32', 'arm64'],
-        help="Target platform"
+        choices=['win32', 'arm64'],
+        help="Target platform (default: win32). Linux/x64 builds are not supported by project automation"
     )
 
     # Toolchain
@@ -163,7 +163,6 @@ def apply_arguments(args):
     # Platform
     if args.platform:
         platform_map = {
-            'x64': Platform.X64,
             'win32': Platform.WIN32,
             'arm64': Platform.ARM64
         }

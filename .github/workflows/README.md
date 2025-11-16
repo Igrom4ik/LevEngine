@@ -56,33 +56,10 @@
 
 ---
 
-### 3. Linux Build (`linux-build.yml`)
+<!-- Linux build removed: project intentionally Windows-only in CI -->
+### Linux Build
 
-**Триггеры:**
-
-- Push в ветки `master`, `develop`
-- Pull Request в ветки `master`, `develop`
-
-**Описание:**
-Сборка проекта на Linux с использованием GCC и Clang компиляторов.
-
-**Матрица сборки:**
-
-- Конфигурации: Debug, Release
-- Компиляторы: GCC 13, Clang 18
-- Генератор: Ninja
-
-**Всего комбинаций:** 4 (2 конфигурации × 2 компилятора)
-
-**Артефакты:**
-
-- `HuyEngine-Linux-gcc-Debug`
-- `HuyEngine-Linux-gcc-Release`
-- `HuyEngine-Linux-clang-Debug`
-- `HuyEngine-Linux-clang-Release`
-
-**Статус:**
-[![Linux Build](../../actions/workflows/linux-build.yml/badge.svg)](../../actions/workflows/linux-build.yml)
+> Удалено: проект CI больше не включает Linux сборки. Если позже потребуется — добавьте отдельный workflow.
 
 ---
 
@@ -217,11 +194,9 @@ clang-format -i Engine/Source/**/*.{ cpp, hpp }
 |--------------------|---------------------------------------------------------------------------------------------------------------------------------------|-------------------------|
 | Clang-format check | [![Clang-format check](../../actions/workflows/clang-format-checker.yml/badge.svg)](../../actions/workflows/clang-format-checker.yml) | Проверка форматирования |
 | Windows Build      | [![Windows Build](../../actions/workflows/windows-build.yml/badge.svg)](../../actions/workflows/windows-build.yml)                    | Сборка на Windows       |
-| Linux Build        | [![Linux Build](../../actions/workflows/linux-build.yml/badge.svg)](../../actions/workflows/linux-build.yml)                          | Сборка на Linux         |
 
 ---
 
 <div align="center">
   <em>📝 Документация создана с помощью <strong>GitHub Copilot</strong> 🤖</em>
 </div>
-
