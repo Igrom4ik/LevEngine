@@ -11,8 +11,10 @@ int main() {
 	LEN::Engine engine;
 	engine.SetApplication(game);
 
+	if (!engine.Init(1280, 720)) {
+		return EXIT_FAILURE;
+	}
+
 	engine.Run();
 	engine.Destroy();
-
-	return EXIT_SUCCESS;
 }
