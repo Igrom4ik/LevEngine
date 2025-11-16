@@ -1,0 +1,104 @@
+name: Package and verify
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+
+jobs:
+  package:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set version (from tag if present)
+        id: set_version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG_NAME=${{ github.ref_name }}
+            # strip leading v
+            TAG_NAME=${TAG_NAME#v}
+            echo "version=${TAG_NAME}" >> $GITHUB_OUTPUT
+          else
+            echo "version=" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      - name: Configure
+        run: |
+          if [ -n "${{ steps.set_version.outputs.version }}" ]; then
+            echo "Configuring with version ${{ steps.set_version.outputs.version }}"
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DHuyEngine_VERSION=${{ steps.set_version.outputs.version }} -DCPACK_PACKAGE_VERSION=${{ steps.set_version.outputs.version }} -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/staging
+          else
+            echo "Configuring without explicit version (use project() default)"
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/staging
+          fi
+        shell: bash
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Install into staging
+        run: cmake --install build --config Release --prefix ${{ github.workspace }}/staging
+
+      - name: Run packaging (CPack)
+        run: cmake --build build --config Release --target package
+
+      - name: Locate produced ZIP
+        run: |
+          echo "Looking for ZIP files under build/ and build/package/"
+          ls -la build || true
+          ls -la build/package || true
+          ZIP=$(ls build/*.zip 2>/dev/null || ls build/package/*.zip 2>/dev/null || true)
+          if [ -z "$ZIP" ]; then
+            echo "No ZIP produced in expected locations"; exit 1
+          fi
+          echo "ZIP found: $ZIP"
+        shell: bash
+
+      - name: Verify package contents (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          ZIP=$(ls build/*.zip 2>/dev/null || ls build/package/*.zip 2>/dev/null || true)
+          if [ -z "$ZIP" ]; then echo "ZIP not found"; exit 1; fi
+          unzip -l "$ZIP" > contents.txt
+          echo "Archive listing:"
+          cat contents.txt
+          grep -q -E '(^|/)(README.md)$' contents.txt || (echo "README.md not found in archive" && exit 1)
+          grep -q -E '(^|/)(bin/)' contents.txt || (echo "bin/ not found in archive" && exit 1)
+          # Fail if any *.cpp or *.h exist in archive listing
+          if grep -Ei '\.cpp$|\.h$' contents.txt; then
+            echo "Source files (*.cpp or *.h) found in archive"; exit 1
+          fi
+        shell: bash
+
+      - name: Verify package contents (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem -Path build\*.zip -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $zip) { $zip = Get-ChildItem -Path build\package\*.zip -ErrorAction SilentlyContinue | Select-Object -First 1 }
+          if (-not $zip) { Write-Error "ZIP not found"; exit 1 }
+          $out = Join-Path $env:GITHUB_WORKSPACE "pkg_extract"
+          Remove-Item -Recurse -Force $out -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path $out | Out-Null
+          Expand-Archive -Path $zip.FullName -DestinationPath $out -Force
+          if (-not (Test-Path (Join-Path $out "README.md"))) { Write-Error "README.md missing in package"; exit 1 }
+          if (-not (Test-Path (Join-Path $out "bin"))) { Write-Error "bin/ missing in package"; exit 1 }
+          $src = Get-ChildItem -Path $out -Recurse -Include *.cpp,*.h -ErrorAction SilentlyContinue
+          if ($src) { Write-Error "Source files (*.cpp/*.h) found in package"; $src | Select-Object FullName -First 20 | ForEach-Object { Write-Output $_.FullName }; exit 1 }
+
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-zip
+          path: |
+            build/*.zip
+            build/package/*.zip
