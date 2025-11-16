@@ -1,4 +1,3 @@
-[submodule "cmake-ci/_deps/glfw-src"]
-	path = cmake-ci/_deps/glfw-src
-	url = https://github.com/glfw/glfw.git
-
+[submodule "Engine/vendor/glfw"]
+    path = Engine/vendor/glfw
+    url = https://github.com/glfw/glfw.git
