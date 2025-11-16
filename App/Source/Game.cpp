@@ -13,5 +13,5 @@ void Game::Update(float deltatime)
 
 void Game::Destroy()
 {
-
+	
 }

@@ -7,15 +7,20 @@
   },
   "configurePresets": [
     {
-      "name": "base",
-      "hidden": true,
-      "binaryDir": "${sourceDir}/build/${presetName}",
+      "name": "otladka",
+      "displayName": "Отладка (Ninja)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/cmake-build-debug",
+      "toolchainFile": "${sourceDir}/Automation/CMAKE/Toolchains/toolchain-msvc.cmake",
       "cacheVariables": {
         "CMAKE_CXX_STANDARD": "23",
         "CMAKE_CXX_STANDARD_REQUIRED": "ON",
         "CMAKE_CXX_EXTENSIONS": "OFF",
-        "CMAKE_EXPERIMENTAL_CXX_MODULE_CMAKE_API": "2182bf5c-ef0d-489a-91da-49dbc3090d2a",
-        "CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP": "ON"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VENDOR_GLFW_FROM_GIT": "ON",
+        "VENDOR_GLFW_USE_CLONE": "OFF",
+        "ENGINE_VENDOR_DIR": "${sourceDir}/Engine/vendor",
+        "VENDOR_GLFW_GIT_TAG": "3.3.8"
       },
       "condition": {
         "type": "equals",
@@ -24,39 +29,25 @@
       }
     },
     {
-      "name": "ninja-base",
-      "hidden": true,
-      "inherits": "base",
+      "name": "reliz",
+      "displayName": "Релиз (Ninja)",
       "generator": "Ninja",
+      "binaryDir": "${sourceDir}/cmake-build-release",
       "toolchainFile": "${sourceDir}/Automation/CMAKE/Toolchains/toolchain-msvc.cmake",
-      "vendor": {
-        "jetbrains.com/clion": {
-          "toolchain": "Visual Studio"
-        }
-      },
       "cacheVariables": {
+        "CMAKE_CXX_STANDARD": "23",
+        "CMAKE_CXX_STANDARD_REQUIRED": "ON",
+        "CMAKE_CXX_EXTENSIONS": "OFF",
+        "CMAKE_BUILD_TYPE": "Release",
         "VENDOR_GLFW_FROM_GIT": "ON",
         "VENDOR_GLFW_USE_CLONE": "OFF",
         "ENGINE_VENDOR_DIR": "${sourceDir}/Engine/vendor",
         "VENDOR_GLFW_GIT_TAG": "3.3.8"
-      }
-    },
-    {
-      "name": "otladka",
-      "displayName": "Отладка (Ninja)",
-      "inherits": "ninja-base",
-      "binaryDir": "${sourceDir}/cmake-build-debug",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
-      }
-    },
-    {
-      "name": "reliz",
-      "displayName": "Релиз (Ninja)",
-      "inherits": "ninja-base",
-      "binaryDir": "${sourceDir}/cmake-build-release",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
       }
     }
   ],
