@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <vector>
+#include <string>
 
 
 int main()
@@ -17,16 +18,16 @@ int main()
     }
 
     /************************************************************************
-     *                   WINDOW HINTS / OPENGL CONTEXT                       *
-     *  - Request a 3.3 Core profile context                                  *
+     *            WINDOW HINTS / REQUEST OPENGL CONTEXT                      *
+     *  - Request an OpenGL 3.3 Core Profile context                          *
      ************************************************************************/
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     /************************************************************************
-     *                            CREATE WINDOW                               *
-     *  - Create the GLFW window and exit if creation fails                   *
+     *                             CREATE WINDOW                              *
+     *  - Create the application window and exit if creation fails            *
      ************************************************************************/
     GLFWwindow* window = glfwCreateWindow(1200, 800, "LevEngine", nullptr, nullptr);
     if (window == nullptr)
@@ -37,15 +38,15 @@ int main()
     }
 
     /************************************************************************
-     *                      SETUP CONTEXT & WINDOW POSITION                   *
-     *  - Position the window and make its GL context current                 *
+     *                    SETUP CONTEXT AND WINDOW POSITION                   *
+     *  - Set the window position and make its OpenGL context current         *
      ************************************************************************/
     glfwSetWindowPos(window, 2000, 150);
     glfwMakeContextCurrent(window);
 
     /************************************************************************
-     *                             INITIALIZE GLEW                            *
-     *  - Initialize GLEW after an OpenGL context has been made current       *
+     *                          INITIALIZE GLEW                               *
+     *  - Initialize GLEW after making a valid OpenGL context current         *
      ************************************************************************/
     if (glewInit() != GLEW_OK)
     {
@@ -54,25 +55,150 @@ int main()
         return -1;
     }
 
+
     /************************************************************************
-     *                              VERTEX DATA                               *
-     *  - Define vertex positions (currently unused placeholder)              *
+     *                 SHADER SOURCES AND COMPILATION                         *
+     *  - Define vertex and fragment shader source strings                    *
+     *  - Compile shaders, check for compile errors and link the program      *
+     ************************************************************************/
+
+    std::string vertexShaderSource = R"(
+        #version 330 core
+        layout (location = 0) in vec3 position;
+        layout (location = 1) in vec3 color;
+
+        out vec3 vColor;
+
+        void main()
+        {
+            vColor = color;
+            gl_Position = vec4(position.x, position.y, position.z, 1.0);
+        }
+    )";
+
+	GLuint vertexShader  = glCreateShader(GL_VERTEX_SHADER);
+	const char* vertexShaderCStr = vertexShaderSource.c_str();
+    glShaderSource(vertexShader, 1, &vertexShaderCStr, nullptr);
+	glCompileShader(vertexShader);
+
+    GLint success;
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+		char infoLog[512];
+        glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
+		std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+
+
+
+    std::string fragmentShaderSource = R"(
+        #version 330 core
+        out vec4 FragColor;
+
+        in vec3 vColor;
+        uniform vec4 uColor;        
+
+        void main()
+        {
+            FragColor = vec4(vColor, 1.0f) * uColor;
+        }
+    )";
+
+	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	const char* fragmentShaderSCStr = fragmentShaderSource.c_str();
+	glShaderSource(fragmentShader, 1, &fragmentShaderSCStr, nullptr);
+	glCompileShader(fragmentShader);
+
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        char infoLog[512];
+        glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
+        std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+
+
+    GLuint shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
+
+	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+	if (!success) {
+		char infoLog[512];  
+		glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
+		std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" <<
+			infoLog << std::endl;
+	}
+
+	glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+
+    /************************************************************************
+     *                              VERTEX DATA                              *
+     *  - Define triangle vertex coordinates (can be uploaded to GPU later)   *
      ************************************************************************/
     std::vector<float> vertices =
     {
-         0.0f, 0.5f, 0.0f,
-         -0.5f, -0.5f, 0.0f,
-         0.5f,  -0.5f, 0.0f
+
+
+		 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,  // Top vertex (Red)
+		 -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // Bottom left vertex (Green)
+		 -0.5f,  -0.5f, 0.0f , 0.0f, 0.0f, 1.0f,  // Bottom right vertex (Blue)
+		 0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f,  // Top vertex (Red)
     };
 
+	// Indices for two triangles (if using EBO) — optimized way for calling vertices
+    std::vector<unsigned int> indices =
+    {
+        0, 1, 2,
+        0, 2, 3
+	};
+
+
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW); // Upload vertex data
+	glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind VBO
+
+	GLuint ebo;
+	glGenBuffers(1, &ebo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW); // Upload index data
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // Unbind EBO
+
+    GLuint vao;
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo); // Bind VBO (it is stored in the VAO now)
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo); // Bind EBO (it is stored in the VAO now)
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, false, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	GLuint uColorLoc =  glGetUniformLocation(shaderProgram, "uColor");
+
+
     /************************************************************************
-     *                                MAIN LOOP                               *
-     *  - Clear the screen, swap buffers and poll events                      *
+     *                            RENDER LOOP / MAIN LOOP                      *
+     *  - Rendering loop: clear screen, swap buffers and poll events          *
      ************************************************************************/
     while (!glfwWindowShouldClose(window))
     {
-        glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+        glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+		glUseProgram(shaderProgram);
+		glBindVertexArray(vao);
+		glUniform4f(uColorLoc, 0.0f, 1.0f, 0.0f, 1.0f);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -80,7 +206,7 @@ int main()
 
     /************************************************************************
      *                                 CLEANUP                                *
-     *  - Terminate GLFW                                                      *
+     *  - Terminate GLFW and release resources                                *
      ************************************************************************/
     glfwTerminate();
     return 0;
