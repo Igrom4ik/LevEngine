@@ -1,0 +1,6 @@
+#pragma once
+
+#define Engine_VERSION_MAJOR @LevEngine_VERSION_MAJOR@
+#define Engine_VERSION_MINOR @LevEngine_VERSION_MINOR@
+#define Engine_VERSION_PATCH @LevEngine_VERSION_PATCH@
+#define Engine_VERSION_STRING "@LevEngine_VERSION@"
