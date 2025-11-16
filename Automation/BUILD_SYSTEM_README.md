@@ -48,7 +48,7 @@ python automation_new.py
   IDE:             Manual (Command Line)
   Система сборки:  Ninja
   Конфигурация:    Debug
-  Платформа:       x64
+  Платформа:       Win32
   Папка сборки:    build
 
 ГЛАВНОЕ МЕНЮ
@@ -126,9 +126,8 @@ build_new.bat -b ninja -c release build
     minsizerel               MinSizeRel
 
 -p, --platform [PLATFORM]    Платформа
-    x64                      64-bit (по умолчанию)
-    win32                    32-bit
-    arm64                    ARM 64-bit
+     win32                    32-bit (по умолчанию)
+     arm64                    ARM 64-bit
 
 --verbose                    Подробный вывод
 --no-clean                   Не очищать перед сборкой
@@ -210,7 +209,7 @@ class BuildConfig:
     current_ide = IDE.MANUAL
     current_build_system = BuildSystem.NINJA
     current_configuration = Configuration.DEBUG
-    current_platform = Platform.X64
+    current_platform = Platform.WIN32
 ```
 
 ## 🔍 Автоматическое обнаружение инструментов

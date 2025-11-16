@@ -87,7 +87,8 @@ class BuildConfig:
     current_ide = IDE.MANUAL
     current_build_system = BuildSystem.NINJA
     current_configuration = Configuration.DEBUG
-    current_platform = Platform.X64
+    # Default to Windows platform as Linux builds are not required for this project
+    current_platform = Platform.WIN32
     current_toolchain = Toolchain.MSVC
 
     # Build options

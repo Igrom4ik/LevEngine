@@ -28,6 +28,20 @@ endif ()
 
 add_executable(${APP_TARGET} ${APP_SOURCES})
 target_link_libraries(${APP_TARGET} PRIVATE ${PROJECT_NAME}Lib)
+
+# If vendor libraries were added (via add_subdirectory), link them so their
+# include directories are propagated and the app can find headers like
+# <GLFW/glfw3.h> and <GL/glew.h>.
+if (TARGET glfw)
+    target_link_libraries(${APP_TARGET} PRIVATE glfw)
+endif()
+
+if (TARGET glew_s)
+    target_link_libraries(${APP_TARGET} PRIVATE glew_s)
+elseif (TARGET glew)
+    target_link_libraries(${APP_TARGET} PRIVATE glew)
+endif()
+
 target_include_directories(${APP_TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Source ${CMAKE_CURRENT_BINARY_DIR})
 
 # folders

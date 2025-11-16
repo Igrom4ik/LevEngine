@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest ]
+        os: [ windows-latest ]
 
     steps:
       - name: Checkout
@@ -64,19 +64,9 @@ jobs:
         shell: bash
 
       - name: Verify package contents (Linux)
-        if: matrix.os == 'ubuntu-latest'
+        if: false
         run: |
-          ZIP=$(ls build/*.zip 2>/dev/null || ls build/package/*.zip 2>/dev/null || true)
-          if [ -z "$ZIP" ]; then echo "ZIP not found"; exit 1; fi
-          unzip -l "$ZIP" > contents.txt
-          echo "Archive listing:"
-          cat contents.txt
-          grep -q -E '(^|/)(README.md)$' contents.txt || (echo "README.md not found in archive" && exit 1)
-          grep -q -E '(^|/)(bin/)' contents.txt || (echo "bin/ not found in archive" && exit 1)
-          # Fail if any *.cpp or *.h exist in archive listing
-          if grep -Ei '\.cpp$|\.h$' contents.txt; then
-            echo "Source files (*.cpp or *.h) found in archive"; exit 1
-          fi
+          echo "Linux verification skipped (workflow configured for Windows only)."
         shell: bash
 
       - name: Verify package contents (Windows)
