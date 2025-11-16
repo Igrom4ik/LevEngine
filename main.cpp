@@ -5,10 +5,40 @@
 #include <string>
 
 
+struct Vec2
+{
+    float x = 0.0f, y = 0.0f;
+};
+
+Vec2 offset;
+
+void keyCallback(GLFWwindow* window, int key, int scanCode, int action, int mods) 
+{
+    if (action == GLFW_PRESS)
+    {
+        switch (key)
+        {
+        case GLFW_KEY_UP:
+            offset.y += 0.25f;
+            break;
+        case GLFW_KEY_DOWN:
+            offset.y -= 0.25f;
+            break;
+        case GLFW_KEY_RIGHT:
+            offset.x += 0.25f;
+            break;
+        case GLFW_KEY_LEFT:
+            offset.x -= 0.25f;
+        default:
+            break;
+        }
+    }
+}
+
 int main()
 {
     /************************************************************************
-     *                          INITIALIZE GLFW                              *
+     *                          INIT: GLFW                                   *
      *  - Initialize the GLFW library and exit on failure                     *
      ************************************************************************/
     if (!glfwInit())
@@ -18,15 +48,15 @@ int main()
     }
 
     /************************************************************************
-     *            WINDOW HINTS / REQUEST OPENGL CONTEXT                      *
-     *  - Request an OpenGL 3.3 Core Profile context                          *
+     *            WINDOW HINTS / OPENGL CONTEXT                               *
+     *  - Request an OpenGL 3.3 Core Profile context                           *
      ************************************************************************/
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     /************************************************************************
-     *                             CREATE WINDOW                              *
+     *                          CREATE WINDOW                                 *
      *  - Create the application window and exit if creation fails            *
      ************************************************************************/
     GLFWwindow* window = glfwCreateWindow(1200, 800, "LevEngine", nullptr, nullptr);
@@ -38,15 +68,16 @@ int main()
     }
 
     /************************************************************************
-     *                    SETUP CONTEXT AND WINDOW POSITION                   *
-     *  - Set the window position and make its OpenGL context current         *
+     *                    SETUP: CALLBACKS & CONTEXT                          *
+     *  - Install input callbacks, set window position and make context current*
      ************************************************************************/
+    glfwSetKeyCallback(window, keyCallback);
     glfwSetWindowPos(window, 2000, 150);
     glfwMakeContextCurrent(window);
 
     /************************************************************************
-     *                          INITIALIZE GLEW                               *
-     *  - Initialize GLEW after making a valid OpenGL context current         *
+     *                          INIT: GLEW                                     *
+     *  - Initialize GLEW after a valid OpenGL context is current             *
      ************************************************************************/
     if (glewInit() != GLEW_OK)
     {
@@ -57,9 +88,8 @@ int main()
 
 
     /************************************************************************
-     *                 SHADER SOURCES AND COMPILATION                         *
-     *  - Define vertex and fragment shader source strings                    *
-     *  - Compile shaders, check for compile errors and link the program      *
+     *                        SHADERS: SOURCES & COMPILE                      *
+     *  - Define vertex/fragment shader sources, compile and link program     *
      ************************************************************************/
 
     std::string vertexShaderSource = R"(
@@ -67,28 +97,29 @@ int main()
         layout (location = 0) in vec3 position;
         layout (location = 1) in vec3 color;
 
+        uniform vec2 uOffset;
+
         out vec3 vColor;
 
         void main()
         {
             vColor = color;
-            gl_Position = vec4(position.x, position.y, position.z, 1.0);
+            gl_Position = vec4(position.x + uOffset.x, position.y + uOffset.y, position.z, 1.0);
         }
     )";
 
-	GLuint vertexShader  = glCreateShader(GL_VERTEX_SHADER);
-	const char* vertexShaderCStr = vertexShaderSource.c_str();
+    GLuint vertexShader  = glCreateShader(GL_VERTEX_SHADER);
+    const char* vertexShaderCStr = vertexShaderSource.c_str();
     glShaderSource(vertexShader, 1, &vertexShaderCStr, nullptr);
-	glCompileShader(vertexShader);
+    glCompileShader(vertexShader);
 
     GLint success;
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
     if (!success) {
-		char infoLog[512];
+        char infoLog[512];
         glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
-		std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+        std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
-
 
 
     std::string fragmentShaderSource = R"(
@@ -104,10 +135,10 @@ int main()
         }
     )";
 
-	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	const char* fragmentShaderSCStr = fragmentShaderSource.c_str();
-	glShaderSource(fragmentShader, 1, &fragmentShaderSCStr, nullptr);
-	glCompileShader(fragmentShader);
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    const char* fragmentShaderSCStr = fragmentShaderSource.c_str();
+    glShaderSource(fragmentShader, 1, &fragmentShaderSCStr, nullptr);
+    glCompileShader(fragmentShader);
 
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
     if (!success) {
@@ -118,87 +149,92 @@ int main()
 
 
     GLuint shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
 
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (!success) {
-		char infoLog[512];  
-		glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
-		std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" <<
-			infoLog << std::endl;
-	}
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        char infoLog[512];  
+        glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
+        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" <<
+            infoLog << std::endl;
+    }
 
-	glDeleteShader(vertexShader);
+    glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
 
     /************************************************************************
      *                              VERTEX DATA                              *
-     *  - Define triangle vertex coordinates (can be uploaded to GPU later)   *
+     *  - Interleaved attributes: position (3 floats) + color (3 floats)     *
      ************************************************************************/
     std::vector<float> vertices =
     {
 
-
-		 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,  // Top vertex (Red)
-		 -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // Bottom left vertex (Green)
-		 -0.5f,  -0.5f, 0.0f , 0.0f, 0.0f, 1.0f,  // Bottom right vertex (Blue)
-		 0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f,  // Top vertex (Red)
+         0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,  // Top vertex (Red)
+         -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // Bottom left vertex (Green)
+         -0.5f,  -0.5f, 0.0f , 0.0f, 0.0f, 1.0f,  // Bottom right vertex (Blue)
+         0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f,  // Top vertex (Red)
     };
 
-	// Indices for two triangles (if using EBO) — optimized way for calling vertices
     std::vector<unsigned int> indices =
     {
         0, 1, 2,
         0, 2, 3
-	};
+    };
 
 
+    /************************************************************************
+     *                         GPU BUFFERS: VBO / EBO / VAO                   *
+     *  - Upload vertex/index data and configure attribute pointers          *
+     ************************************************************************/
     GLuint vbo;
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW); // Upload vertex data
-	glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind VBO
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	GLuint ebo;
-	glGenBuffers(1, &ebo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW); // Upload index data
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // Unbind EBO
+    GLuint ebo;
+    glGenBuffers(1, &ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     GLuint vao;
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo); // Bind VBO (it is stored in the VAO now)
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo); // Bind EBO (it is stored in the VAO now)
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 3, GL_FLOAT, false, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, false, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+    glBindVertexArray(0);
 
-	GLuint uColorLoc =  glGetUniformLocation(shaderProgram, "uColor");
+    GLint uColorLoc =  glGetUniformLocation(shaderProgram, "uColor");
+    GLint uOffsetLoc = glGetUniformLocation(shaderProgram, "uOffset");
 
 
     /************************************************************************
      *                            RENDER LOOP / MAIN LOOP                      *
-     *  - Rendering loop: clear screen, swap buffers and poll events          *
+     *  - Rendering loop: clear screen, set uniforms, draw, swap buffers     *
      ************************************************************************/
     while (!glfwWindowShouldClose(window))
     {
         glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-		glUseProgram(shaderProgram);
-		glBindVertexArray(vao);
-		glUniform4f(uColorLoc, 0.0f, 1.0f, 0.0f, 1.0f);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glUseProgram(shaderProgram);
+        glBindVertexArray(vao);
+        glUniform4f(uColorLoc, 0.0f, 1.0f, 0.0f, 1.0f);
+        glUniform2f(uOffsetLoc, offset.x, offset.y);
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
