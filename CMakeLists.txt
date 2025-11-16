@@ -201,7 +201,9 @@ if (NOT _glew_target_found)
                 set(_glew_target_found glew_s)
                 break()
             elseif (EXISTS "${_glew_lib_x64_dyn}")
-                add_library(glew IMPORTED)
+                add_library(glew IMPORTED
+                        Engine/Source/Core/Application.cpp
+                        Engine/Source/Core/Application.hpp)
                 set_target_properties(glew PROPERTIES IMPORTED_LOCATION "${_glew_lib_x64_dyn}")
                 target_include_directories(glew INTERFACE "${_glew_include_dir}")
                 set(_glew_target_found glew)

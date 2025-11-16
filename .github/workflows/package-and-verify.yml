@@ -48,6 +48,12 @@ jobs:
       - name: Install into staging
         run: cmake --install build --config Release --prefix ${{ github.workspace }}/staging
 
+      - name: Install NSIS (Chocolatey)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install nsis --yes --no-progress
+
       - name: Run packaging (CPack)
         run: cmake --build build --config Release --target package
 
