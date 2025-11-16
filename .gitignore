@@ -86,3 +86,4 @@ build_validate*/
 staging/
 pkg_extract/
 package/
+vs-build/.vs/
