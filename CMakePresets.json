@@ -37,6 +37,7 @@
       "cacheVariables": {
         "VENDOR_GLFW_FROM_GIT": "ON",
         "VENDOR_GLFW_USE_CLONE": "OFF",
+        "ENGINE_VENDOR_DIR": "${sourceDir}/Engine/vendor",
         "VENDOR_GLFW_GIT_TAG": "3.3.8"
       }
     },
