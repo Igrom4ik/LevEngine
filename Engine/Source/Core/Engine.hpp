@@ -1,16 +1,26 @@
 #pragma once
-#include <string_view>
 #include "EngineConfig.h"
+#include <memory>
+#include <chrono>
 
-namespace LevEngine
+namespace LEN
 {
-class Engine final
-{
-public:
-    Engine();
+    class Application;
+    class Engine
+    {
+    public:
+        Engine();
+        ~Engine();
+        bool Init();
+        void Run();
+        void Destroy();
 
-    static constexpr std::string_view version() { return Engine_VERSION_STRING; }
+        void SetApplication(Application* app);
+        Application* GetApplication();
 
-    ~Engine() = default;
-};
-}  // namespace LevEngine
+    private:
+        std::unique_ptr<Application> m_application;
+        std::chrono::steady_clock::time_point m_lastTimePoint;
+
+    };
+}  // namespace LEN

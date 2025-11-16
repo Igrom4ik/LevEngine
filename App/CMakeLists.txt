@@ -1,11 +1,11 @@
 # common options
-set(APP_TARGET LevEngineApp)
+set(APP_TARGET LENApp)
 
 # version
-set(LevEngine_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
-set(LevEngine_VERSION_MINOR ${PROJECT_VERSION_MINOR})
-set(LevEngine_VERSION_PATCH ${PROJECT_VERSION_PATCH})
-set(LevEngine_VERSION ${PROJECT_VERSION})
+set(LEN_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(LEN_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(LEN_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(LEN_VERSION ${PROJECT_VERSION})
 configure_file(EngineConfig.h.template ${CMAKE_CURRENT_BINARY_DIR}/EngineConfig.h)
 
 # Generate application version header from template
@@ -16,13 +16,15 @@ endif ()
 
 set(APP_SOURCES
         Source/main.cpp
+        Source/Game.cpp
+        Source/Game.hpp
         Source/pch.cpp
         Source/pch.hpp
         ${CMAKE_CURRENT_BINARY_DIR}/EngineConfig.h
 )
 
 # Create application target from sources
-add_executable(${APP_TARGET} ${APP_SOURCES})
+add_executable(${APP_TARGET} ${APP_SOURCES} "Source/Game.cpp")
 
 # Link engine library (engine target should export include dirs and dependencies)
 target_link_libraries(${APP_TARGET} PRIVATE ${PROJECT_NAME}Lib)

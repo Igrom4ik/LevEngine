@@ -1,10 +1,18 @@
 // ============================================================================
-// main.cpp - LevEngine Application Entry Point
+// main.cpp - LEN Application Entry Point
 // ============================================================================
-#include "Core/Engine.hpp"
-#include <cstdlib>
+#include "Game.hpp"
+#include "Core/eng.hpp"
+
 
 int main() {
-    const LevEngine::Engine engine;
-    return EXIT_SUCCESS;
+
+	Game* game = new Game();
+	LEN::Engine engine;
+	engine.SetApplication(game);
+
+	engine.Run();
+	engine.Destroy();
+
+	return EXIT_SUCCESS;
 }

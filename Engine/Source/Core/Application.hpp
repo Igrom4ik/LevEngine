@@ -1,13 +1,25 @@
-//
-// Created by igrom on 16.11.2025.
-//
+#pragma once
 
-#ifndef LEVENGINE_APPLICATION_H
-#define LEVENGINE_APPLICATION_H
+namespace LEN
+{
+	class Application {
+	public:
+		virtual bool Init() = 0;
+
+		// Deltatime in seconds
+		virtual void Update(float deltatime) = 0;
+		
+		virtual void Destroy() = 0;
+
+		void SetNeedsToClose(bool value);
+		bool NeedsToBeClose() const;
+
+	private:
+		bool m_NeedsToBeClose = false;
+
+	};
+}
 
 
-class Application {
-};
 
 
-#endif //LEVENGINE_APPLICATION_H

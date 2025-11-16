@@ -1,5 +1,5 @@
 """
-LevEngine - Build Configuration
+LEN - Build Configuration
 Configuration for various IDEs and build systems
 """
 
@@ -58,14 +58,14 @@ class BuildConfig:
     STATE_FILE = PROJECT_ROOT / "Automation" / ".build_state.json"
 
     # Project name and C++ standard (can be overridden by menu)
-    PROJECT_NAME = "LevEngine"
+    PROJECT_NAME = "LEN"
     CXX_STANDARD = 20
 
     # CMake minimum required version (can be set in menu)
     CMAKE_MINIMUM_VERSION = "3.31.6"
 
     # Executable name (legacy default); prefer get_executable_name() in code
-    EXECUTABLE_NAME = "LevEngine.exe"
+    EXECUTABLE_NAME = "LEN.exe"
 
     # Source directories for clang-format
     SOURCE_DIRS = ["Engine", "main.cpp"]
@@ -323,7 +323,7 @@ class ToolPaths:
                 return path
 
         # Try common chocolatey location
-        choco_path = r"C:\ProgramData\chocolatey\bin\cmake.exe"
+        choco_path = r"C:\\ProgramData\\chocolatey\\bin\\cmake.exe"
         if os.path.exists(choco_path):
             return choco_path
 
@@ -341,7 +341,7 @@ class ToolPaths:
                 return path
 
         # Try chocolatey bin as fallback
-        choco_ninja = r"C:\ProgramData\chocolatey\bin\ninja.exe"
+        choco_ninja = r"C:\\ProgramData\\chocolatey\\bin\\ninja.exe"
         if os.path.exists(choco_ninja):
             return choco_ninja
 

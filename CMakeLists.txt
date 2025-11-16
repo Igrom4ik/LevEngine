@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # project
-project(LevEngine VERSION 1.0.0 LANGUAGES C CXX)
+project(LEN VERSION 1.0.0 LANGUAGES C CXX)
 
 # build only on Windows
 if (NOT WIN32)
@@ -15,17 +15,17 @@ if (NOT WIN32)
 endif()
 
 # version variables (allow override from cache)
-if (NOT DEFINED LevEngine_VERSION)
-    set(LevEngine_VERSION ${PROJECT_VERSION} CACHE STRING "LevEngine version")
+if (NOT DEFINED LEN_VERSION)
+    set(LEN_VERSION ${PROJECT_VERSION} CACHE STRING "LEN version")
 endif()
-if (NOT DEFINED LevEngine_VERSION_MAJOR)
-    set(LevEngine_VERSION_MAJOR ${PROJECT_VERSION_MAJOR} CACHE STRING "LevEngine version major")
+if (NOT DEFINED LEN_VERSION_MAJOR)
+    set(LEN_VERSION_MAJOR ${PROJECT_VERSION_MAJOR} CACHE STRING "LEN version major")
 endif()
-if (NOT DEFINED LevEngine_VERSION_MINOR)
-    set(LevEngine_VERSION_MINOR ${PROJECT_VERSION_MINOR} CACHE STRING "LevEngine version minor")
+if (NOT DEFINED LEN_VERSION_MINOR)
+    set(LEN_VERSION_MINOR ${PROJECT_VERSION_MINOR} CACHE STRING "LEN version minor")
 endif()
-if (NOT DEFINED LevEngine_VERSION_PATCH)
-    set(LevEngine_VERSION_PATCH ${PROJECT_VERSION_PATCH} CACHE STRING "LevEngine version patch")
+if (NOT DEFINED LEN_VERSION_PATCH)
+    set(LEN_VERSION_PATCH ${PROJECT_VERSION_PATCH} CACHE STRING "LEN version patch")
 endif()
 
 # output directories
@@ -37,7 +37,7 @@ set(CMAKE_SUPPRESS_REGENERATION TRUE)
 
 add_subdirectory(Engine)
 
-# Add application subdirectory which creates LevEngineApp from App/Source
+# Add application subdirectory which creates LENApp from App/Source
 add_subdirectory(App)
 
 # Generate EngineConfig.h from template into build dir so the app can include it
@@ -47,7 +47,7 @@ if (EXISTS "${CMAKE_SOURCE_DIR}/EngineConfig.h.template")
 endif()
 
 # Set startup project for IDEs
-set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT LevEngineApp)
+set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT LENApp)
 
 # Optional helper includes
 set(_helpers_path "${CMAKE_SOURCE_DIR}/Automation/CMAKE/CMakeHelpers.cmake")
@@ -61,7 +61,7 @@ else()
 endif()
 
 # Install
-install(TARGETS LevEngineApp RUNTIME DESTINATION bin)
+install(TARGETS LENApp RUNTIME DESTINATION bin)
 
 # CPack (optional)
 if (EXISTS "${CMAKE_SOURCE_DIR}/cmake/CPackReleaseConfig.cmake")
@@ -78,8 +78,8 @@ add_custom_target(package-release
 )
 
 add_custom_target(print-version
-    COMMAND ${CMAKE_COMMAND} -E echo "LevEngine version: ${PROJECT_VERSION}"
-    COMMENT "Print configured LevEngine version"
+    COMMAND ${CMAKE_COMMAND} -E echo "LEN version: ${PROJECT_VERSION}"
+    COMMENT "Print configured LEN version"
 )
 
 add_custom_target(package-release-help
