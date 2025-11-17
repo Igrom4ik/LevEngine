@@ -11,6 +11,9 @@ set(ENGINE_SOURCES
         Source/Core/Engine.hpp
         Source/Core/Application.cpp
         Source/Core/Application.hpp
+        Source/Input/InputManager.hpp
+        Source/Input/InputManager.cpp
+        Source/Input/InputKeys.hpp
         ${CMAKE_CURRENT_BINARY_DIR}/EngineConfig.h
 )
 
@@ -77,7 +80,7 @@ endif()
 # Link vendor libraries to engine library if targets are present
 if (TARGET glfw)
     message(STATUS "VENDOR: target 'glfw' exists; linking to ${PROJECT_NAME}Lib")
-    target_link_libraries(${PROJECT_NAME}Lib PRIVATE glfw)
+    target_link_libraries(${PROJECT_NAME}Lib PUBLIC glfw)
 else()
     message(STATUS "VENDOR: target 'glfw' not found; GLFW will not be linked")
 endif()

@@ -10,6 +10,45 @@ namespace LEN
     Engine::Engine() = default;
     Engine::~Engine() = default;
 
+    LEN::Key GLFWKeyToKey(int glfwKey)
+    {
+        using KEY = LEN::Key;
+        if (glfwKey >= GLFW_KEY_A && glfwKey <= GLFW_KEY_Z)
+            return static_cast<KEY>(static_cast<int>(KEY::A) + (glfwKey - GLFW_KEY_A));
+        if (glfwKey >= GLFW_KEY_0 && glfwKey <= GLFW_KEY_9)
+            return static_cast<KEY>(static_cast<int>(KEY::Num0) + (glfwKey - GLFW_KEY_0));
+        switch (glfwKey)
+        {
+        case GLFW_KEY_SPACE: return KEY::Space;
+        case GLFW_KEY_ESCAPE: return KEY::Escape;
+        case GLFW_KEY_ENTER: return KEY::Enter;
+        case GLFW_KEY_LEFT: return KEY::Left;
+        case GLFW_KEY_RIGHT: return KEY::Right;
+        case GLFW_KEY_UP: return KEY::Up;
+        case GLFW_KEY_DOWN: return KEY::Down;
+        default: return KEY::Unknown;
+        }
+    }
+
+    void keyCallback(GLFWwindow* /*window*/, int key, int /*scancode*/, int action, int /*mods*/)
+    {
+        auto mapped = GLFWKeyToKey(key);
+        if (mapped == LEN::Key::Unknown) return; // ignore unmapped keys
+
+        auto& inputManager = LEN::Engine::GetInstance().GetInputManager();
+
+        if (action == GLFW_PRESS || action == GLFW_REPEAT)
+            inputManager.SetKeyPressed(mapped, true);
+        else if (action == GLFW_RELEASE)
+            inputManager.SetKeyPressed(mapped, false);
+    }
+
+    Engine& Engine::GetInstance()
+    {
+        static Engine instance;
+        return instance;
+    }
+
     bool Engine::Init(int width, int height)
     {
         if (!m_application)
@@ -44,6 +83,8 @@ namespace LEN
             glfwTerminate();
             return false;
         }
+
+        glfwSetKeyCallback(m_window, keyCallback);
 
 
         /************************************************************************
@@ -108,4 +149,10 @@ namespace LEN
     {
         return m_application.get();
     }
+
+    InputManager& Engine::GetInputManager()
+    {
+        return m_inputManager;
+    }
+
 } // namespace LEN
