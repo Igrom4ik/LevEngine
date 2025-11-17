@@ -8,7 +8,12 @@ bool Game::Init()
 
 void Game::Update(float deltatime)
 {
-	std::cout << "Deltatime: " << deltatime << " seconds" << std::endl;
+	auto& input = LEN::Engine::GetInstance().GetInputManager();
+
+	if (input.IsKeyPressed(LEN::Key::A))
+	{
+		std::cout << "[A] button is pressed" << std::endl;
+	}
 }
 
 void Game::Destroy()

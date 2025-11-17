@@ -8,7 +8,7 @@
 int main() {
 
 	Game* game = new Game();
-	LEN::Engine engine;
+	LEN::Engine& engine = LEN::Engine::GetInstance();
 	engine.SetApplication(game);
 
 	if (!engine.Init(1280, 720)) {
