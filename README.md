@@ -6,7 +6,9 @@
 
 Custom Game Engine built with C++ and CMake.
 
-> 📝 **Документация и дизайн документации созданы благодаря GitHub Copilot**
+> 📝 **Documentation and documentation design are powered by GitHub Copilot**
+
+**Note:** This is an educational project currently in WIP (work-in-progress). The project is released under a permissive license — everyone is welcome to study, modify, and fork the repository.
 
 ## 🚀 Quick Start
 
@@ -129,7 +131,7 @@ LevEngine/
 │   ├── build.bat               # Main build launcher
 │   ├── build_menu.bat          # Interactive menu launcher
 │   ├── automation_new.py       # Python automation script
-│   ├── build_config.py         # Build configuration
+│   ├── build_config.py         # Build system configuration
 │   ├── build_actions.py        # Build actions
 │   ├── build_menu.py           # Interactive menu
 │   ├── user_config.template.py # User config template
@@ -140,7 +142,7 @@ LevEngine/
 ├── docs/                       # Documentation (RU)
 │   ├── README.md               # Documentation index
 │   ├── BUILD_QUICKSTART.md     # Quick start guide
-│   ├── BUILD_INSTRUCTIONS_RU.md # Full build instructions
+│   ├── BUILD_INSTRUCTIONS_RU.md # Full instruction
 │   └── [other docs]
 ├── scripts/                    # Additional scripts
 └── cmake-build-*/              # Build directories (auto-generated)
@@ -226,7 +228,7 @@ CUSTOM_CMAKE_FLAGS = ["-DENABLE_TESTING=ON"]
 
 ## License
 
-[Your License Here]
+This project is an educational work-in-progress (WIP). It is released under a permissive license (MIT) — feel free to study, modify and fork the repository.
 
 ---
 
