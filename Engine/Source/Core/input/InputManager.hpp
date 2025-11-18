@@ -1,9 +1,7 @@
 #pragma once
 #include <array>
-#include "Input/InputKeys.hpp"
+#include "Core/Input/InputKeys.hpp"
 
-// Forward declarations to avoid including heavy Engine headers in every file that
-// uses Input. Implementation files should include the full headers when needed.
 namespace LEN
 {
     class InputManager
@@ -26,6 +24,5 @@ namespace LEN
     };
 }
 
-// ... Input API declarations would go here ...
 
 

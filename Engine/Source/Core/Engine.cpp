@@ -155,4 +155,10 @@ namespace LEN
         return m_inputManager;
     }
 
+
+    GraphicsApi& Engine::GetGraphicsAPI()
+    {
+		return m_graphicsAPI;
+    }
+
 } // namespace LEN
