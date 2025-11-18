@@ -1,11 +1,12 @@
 #pragma once
-#include "Input/InputManager.hpp"
+#include "input/InputManager.hpp"
+#include "graphics/ShaderProgram.hpp"
+#include "Core/graphics/GraphicsAPI.hpp"
 #include "EngineConfig.h"
 #include <memory>
 #include <chrono>
 
 struct GLFWwindow;
-
 namespace LEN
 {
     inline Key GLFWKeyToKey(int glfwKey);
@@ -37,11 +38,15 @@ namespace LEN
 
 		InputManager& GetInputManager();
 
+		GraphicsApi& GetGraphicsAPI();
+
     private:
         std::unique_ptr<Application> m_application;
         std::chrono::steady_clock::time_point m_lastTimePoint;
 		GLFWwindow* m_window = nullptr;
 
 		InputManager m_inputManager;
+
+		GraphicsApi m_graphicsAPI;
     };
 }  // namespace LEN

@@ -11,9 +11,19 @@ set(ENGINE_SOURCES
         Source/Core/Engine.hpp
         Source/Core/Application.cpp
         Source/Core/Application.hpp
-        Source/Input/InputManager.hpp
-        Source/Input/InputManager.cpp
-        Source/Input/InputKeys.hpp
+        Source/Core/input/InputManager.hpp
+        Source/Core/input/InputManager.cpp
+        Source/Core/input/InputKeys.hpp
+        Source/Core/graphics/ShaderProgram.cpp
+        Source/Core/graphics/ShaderProgram.hpp
+        Source/Core/graphics/GraphicsAPI.cpp
+        Source/Core/graphics/GraphicsAPI.hpp
+        Source/Core/render/Material.cpp
+        Source/Core/render/Material.hpp
+        Source/Core/render/Mesh.cpp
+        Source/Core/render/Mesh.hpp
+        Source/Core/render/VertexLayout.hpp
+
         ${CMAKE_CURRENT_BINARY_DIR}/EngineConfig.h
 )
 
