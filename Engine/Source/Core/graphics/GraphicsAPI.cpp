@@ -1,6 +1,7 @@
 #include "Core/graphics/GraphicsAPI.hpp"
 #include "Core/graphics/ShaderProgram.hpp"
 #include "Core/render/Material.hpp"
+#include "Core/render/Mesh.hpp"
 #include <iostream>
 
 
@@ -106,4 +107,21 @@ namespace LEN
 			material->Bind();
         }
     }
+
+    void GraphicsApi::BindMesh(Mesh* mesh)
+    {
+        if (mesh)
+        {
+			mesh->Bind();
+        }
+    }
+
+    void GraphicsApi::DrawMesh(Mesh* mesh)
+    {
+        if (mesh)
+        {
+            mesh->Draw();
+        }
+    }
+
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include <Core/eng.hpp>
-#include <Core/render/Material.hpp>
+#include <memory>
 
 class Game : public LEN::Application
 {
@@ -11,4 +11,5 @@ public:
 
 private:
 	LEN::Material m_material;
+	std::unique_ptr<LEN::Mesh> m_mesh; // Using unique_ptr for automatic memory management
 };

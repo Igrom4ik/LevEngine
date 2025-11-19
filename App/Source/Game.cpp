@@ -49,6 +49,34 @@ bool Game::Init()
     auto shaderProgram = graphicAPI.CreateShaderProgram(vertexShaderSource, fragmentShaderSource);
 	m_material.SetShaderProgram(shaderProgram); // Set the shader program to the material
 
+
+	// Create geometry data for a simple square (two triangles)
+    std::vector<float> vertices =
+    {
+
+         0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
+         -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
+         -0.5f,  -0.5f, 0.0f , 0.0f, 0.0f, 1.0f,
+         0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f,
+    };
+
+    std::vector<unsigned int> indices =
+    {
+        0, 1, 2,
+        0, 2, 3
+    };
+
+	LEN::VertexLayout vertexLayout;
+
+    // Position
+	vertexLayout.elements.push_back({ 0, 3, GL_FLOAT, 0 });
+
+	// Color
+	vertexLayout.elements.push_back({ 1, 3, GL_FLOAT, sizeof(float) * 3 });
+	vertexLayout.stride = sizeof(float) * 6; // 3 for position + 3 for color
+
+	m_mesh = std::make_unique<LEN::Mesh>(vertexLayout, vertices, indices);
+
     return true;
 }
 

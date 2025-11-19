@@ -8,6 +8,7 @@ namespace LEN
 {
 	class ShaderProgram;
 	class Material;
+	class Mesh;
 
 	class GraphicsApi
 	{
@@ -19,6 +20,8 @@ namespace LEN
 
 		void BindShaderProgram(ShaderProgram* shderProgram);
 		void BindMaterial(Material* material);
+		void BindMesh(Mesh* mesh);
+		void DrawMesh(Mesh* mesh);
 
 
 	};
