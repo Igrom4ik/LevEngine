@@ -23,6 +23,8 @@ set(ENGINE_SOURCES
         Source/Core/render/Mesh.cpp
         Source/Core/render/Mesh.hpp
         Source/Core/render/VertexLayout.hpp
+        Source/Core/render/Render.cpp
+        Source/Core/render/Render.hpp
 
         ${CMAKE_CURRENT_BINARY_DIR}/EngineConfig.h
 )

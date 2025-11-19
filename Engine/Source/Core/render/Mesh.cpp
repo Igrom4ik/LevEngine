@@ -42,7 +42,9 @@ namespace LEN
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-		m_vertexCount = (vertices.size() + sizeof(float)) / m_vertexLayout.stride;
+		// vertices.size() returns number of floats; m_vertexLayout.stride is in bytes.
+		// Convert float count to bytes before dividing by stride to get vertex count.
+		m_vertexCount = (vertices.size() * sizeof(float)) / static_cast<size_t>(m_vertexLayout.stride);
 		m_indexCount = indices.size();
 	}
 
@@ -76,7 +78,9 @@ namespace LEN
 		glBindVertexArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-		m_vertexCount = (vertices.size() + sizeof(float)) / m_vertexLayout.stride;
+		// vertices.size() returns number of floats; m_vertexLayout.stride is in bytes.
+		// Convert float count to bytes before dividing by stride to get vertex count.
+		m_vertexCount = (vertices.size() * sizeof(float)) / static_cast<size_t>(m_vertexLayout.stride);
 
 	}
 
