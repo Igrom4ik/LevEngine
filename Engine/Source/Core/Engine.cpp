@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
+
 namespace LEN
 {
     Engine::Engine() = default;
@@ -120,6 +121,11 @@ namespace LEN
 
             m_application->Update(deltaTime);
 
+			m_graphicsAPI.SetColor(LEN::Color::BLACK, 1.0f);
+            m_graphicsAPI.ClearBuffers();
+
+			m_renderQueue.Draw(m_graphicsAPI);
+
             glfwSwapBuffers(m_window); // Swap front and back buffers
         }
     }
@@ -156,9 +162,14 @@ namespace LEN
     }
 
 
-    GraphicsApi& Engine::GetGraphicsAPI()
+    GraphicsAPI& Engine::GetGraphicsAPI()
     {
 		return m_graphicsAPI;
+    }
+
+    RenderQueue& Engine::GetRenderQueue()
+    {
+		return m_renderQueue;
     }
 
 } // namespace LEN

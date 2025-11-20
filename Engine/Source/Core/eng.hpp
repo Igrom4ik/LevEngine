@@ -9,3 +9,6 @@
 #include "Core/render/Material.hpp"
 #include "Core/render/Mesh.hpp"
 #include "Core/render/Render.hpp"
+#include "Core/graphics/Colors.hpp"
+#include "Core/scene/Scene.hpp"
+#include "Core/scene/GameObject.hpp"

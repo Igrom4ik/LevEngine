@@ -16,9 +16,10 @@ bool Game::Init()
         layout (location = 0) in vec3 position;
         layout (location = 1) in vec3 color;
 
+        out vec3 vColor;
+
         uniform vec2 uOffset;
 
-        out vec3 vColor;
 
         void main()
         {
@@ -32,11 +33,11 @@ bool Game::Init()
         out vec4 FragColor;
 
         in vec3 vColor;
-        uniform vec4 uColor;        
 
         void main()
         {
-            FragColor = vec4(vColor, 1.0f) * uColor;
+            // Use vertex color directly to avoid relying on material uniform support for vec4
+            FragColor = vec4(vColor, 1.0);
         }
     )";
 
@@ -84,10 +85,36 @@ void Game::Update(float deltatime)
 {
 	auto& input = LEN::Engine::GetInstance().GetInputManager();
 
-	if (input.IsKeyPressed(LEN::Key::A))
+	// Horizontal movement
+	if (input.IsKeyPressed(LEN::Key::A) || input.IsKeyPressed(LEN::Key::Left))
 	{
-		std::cout << "[A] button is pressed" << std::endl;
+        m_offsetX -= 0.01f;
 	}
+    else if (input.IsKeyPressed(LEN::Key::D) || input.IsKeyPressed(LEN::Key::Right))
+    {
+        m_offsetX += 0.01f;
+	}
+
+	// Vertical movement
+    if (input.IsKeyPressed(LEN::Key::S) || input.IsKeyPressed(LEN::Key::Down))
+    {
+        m_offsetY -= 0.01f;
+    }
+
+    else if (input.IsKeyPressed(LEN::Key::W) || input.IsKeyPressed(LEN::Key::Up))
+    {
+        m_offsetY += 0.01f;
+	}
+	// Update material uniform for offset
+	m_material.SetParam("uOffset", m_offsetX, m_offsetY);
+
+
+	LEN::RenderCommand cmd;
+    cmd.material = &m_material;
+	cmd.mesh = m_mesh.get();
+
+    auto& renderQueue = LEN::Engine::GetInstance().GetRenderQueue();
+	renderQueue.Submit(cmd);
 }
 
 void Game::Destroy()

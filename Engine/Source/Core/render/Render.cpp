@@ -17,6 +17,10 @@ namespace LEN
 		for (auto& command : m_commands)
 		{
 			graphicsAPI.BindMaterial(command.material);
+			graphicsAPI.BindMesh(command.mesh);
+			graphicsAPI.DrawMesh(command.mesh);
 		}
+
+		m_commands.clear();
 	}
 }
