@@ -5,7 +5,7 @@ namespace LEN
 {
 	void Scene::Update(float deltaTime)
 	{
-		for (auto it = m_objects.begin(); it != m_objects.end(); ++it)
+		for (auto it = m_objects.begin(); it != m_objects.end();)
 		{
 			if ((*it)->IsAlive())
 			{

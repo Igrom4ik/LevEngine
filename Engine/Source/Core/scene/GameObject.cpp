@@ -4,7 +4,7 @@ namespace LEN
 {
 	void GameObject::Update(float deltaTime)
 	{
-		for (auto it = m_children.begin(); it != m_children.end(); ++it)
+		for (auto it = m_children.begin(); it != m_children.end();)
 		{
 			if ((*it)->IsAlive())
 			{
@@ -16,6 +16,7 @@ namespace LEN
 				it = m_children.erase(it);
 			}
 		}
+
 	}
 
 	const std::string& GameObject::GetName() const
