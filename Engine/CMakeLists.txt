@@ -25,6 +25,11 @@ set(ENGINE_SOURCES
         Source/Core/render/VertexLayout.hpp
         Source/Core/render/Render.cpp
         Source/Core/render/Render.hpp
+        Source/Core/graphics/Colors.hpp
+        Source/Core/scene/GameObject.cpp
+        Source/Core/scene/GameObject.hpp
+        Source/Core/scene/Scene.cpp
+        Source/Core/scene/Scene.hpp
 
         ${CMAKE_CURRENT_BINARY_DIR}/EngineConfig.h
 )

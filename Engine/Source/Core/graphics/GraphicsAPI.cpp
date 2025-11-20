@@ -8,7 +8,7 @@
 
 namespace LEN
 {
-	std::shared_ptr<ShaderProgram> LEN::GraphicsApi::CreateShaderProgram(const std::string& vertexSource, const std::string& fragmentSource) 
+	std::shared_ptr<ShaderProgram> LEN::GraphicsAPI::CreateShaderProgram(const std::string& vertexSource, const std::string& fragmentSource) 
 	{
         GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
         const char* vertexShaderCStr = vertexSource.c_str();
@@ -72,7 +72,7 @@ namespace LEN
     
     }
 
-    GLuint GraphicsApi::CreateVertexBuffer(const std::vector<float>& vertices)
+    GLuint GraphicsAPI::CreateVertexBuffer(const std::vector<float>& vertices)
     {
         GLuint VBO = 0;
         glGenBuffers(1, &VBO);
@@ -82,7 +82,7 @@ namespace LEN
 		return VBO;
     }
 
-    GLuint GraphicsApi::CreateIndexBuffer(const std::vector<uint32_t>& indices)
+    GLuint GraphicsAPI::CreateIndexBuffer(const std::vector<uint32_t>& indices)
     {
         GLuint EBO = 0;
         glGenBuffers(1, &EBO);
@@ -92,7 +92,7 @@ namespace LEN
         return EBO;
     }
 
-    void GraphicsApi::BindShaderProgram(ShaderProgram* shderProgram)
+    void GraphicsAPI::BindShaderProgram(ShaderProgram* shderProgram)
     {
         if (shderProgram)
         {
@@ -100,7 +100,7 @@ namespace LEN
         }
     }
 
-    void GraphicsApi::BindMaterial(Material* material)
+    void GraphicsAPI::BindMaterial(Material* material)
     {
         if (material)
         {
@@ -108,7 +108,7 @@ namespace LEN
         }
     }
 
-    void GraphicsApi::BindMesh(Mesh* mesh)
+    void GraphicsAPI::BindMesh(Mesh* mesh)
     {
         if (mesh)
         {
@@ -116,12 +116,24 @@ namespace LEN
         }
     }
 
-    void GraphicsApi::DrawMesh(Mesh* mesh)
+    void GraphicsAPI::DrawMesh(Mesh* mesh)
     {
         if (mesh)
         {
             mesh->Draw();
         }
+    }
+
+    void GraphicsAPI::SetColor(Color color, float a)
+    {
+       
+        const ColorRGB c = LEN::GetColorRGB(color);
+        glClearColor(c.r, c.g, c.b, a);
+    }
+
+    void GraphicsAPI::ClearBuffers()
+    {
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
 }

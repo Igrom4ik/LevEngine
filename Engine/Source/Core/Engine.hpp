@@ -2,7 +2,9 @@
 #include "input/InputManager.hpp"
 #include "graphics/ShaderProgram.hpp"
 #include "Core/graphics/GraphicsAPI.hpp"
+#include "Core/render/Render.hpp"
 #include "EngineConfig.h"
+#include "Core/graphics/Colors.hpp"
 #include <memory>
 #include <chrono>
 
@@ -38,7 +40,9 @@ namespace LEN
 
 		InputManager& GetInputManager();
 
-		GraphicsApi& GetGraphicsAPI();
+		GraphicsAPI& GetGraphicsAPI();
+        RenderQueue& GetRenderQueue();
+
 
     private:
         std::unique_ptr<Application> m_application;
@@ -47,6 +51,8 @@ namespace LEN
 
 		InputManager m_inputManager;
 
-		GraphicsApi m_graphicsAPI;
+		GraphicsAPI m_graphicsAPI;
+		RenderQueue m_renderQueue;
+
     };
 }  // namespace LEN
