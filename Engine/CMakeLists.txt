@@ -35,6 +35,22 @@ set(ENGINE_SOURCES
 )
 
 add_library(${PROJECT_NAME}Lib STATIC ${ENGINE_SOURCES})
+# Ensure MSVC Debug builds for this target use /ZI (Edit-and-Continue)
+if (MSVC)
+    target_compile_options(${PROJECT_NAME}Lib PRIVATE
+        $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:MSVC>>:/ZI>
+    )
+    target_link_options(${PROJECT_NAME}Lib PRIVATE
+        $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:MSVC>>:/DEBUG;/INCREMENTAL>
+    )
+
+    # Also set Visual Studio specific property for Edit-and-Continue (helps VS generators)
+    set_target_properties(${PROJECT_NAME}Lib PROPERTIES VS_DEBUG_INFORMATION_FORMAT "EditAndContinue")
+
+    # Force Render.cpp to be compiled with /ZI explicitly to avoid file-level overrides
+    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/Source/Core/render/Render.cpp PROPERTIES COMPILE_FLAGS "/ZI")
+endif()
+
 target_include_directories(${PROJECT_NAME}Lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Source ${CMAKE_CURRENT_BINARY_DIR})
 
 # --- Vendor libraries (moved from top-level CMakeLists) ---
