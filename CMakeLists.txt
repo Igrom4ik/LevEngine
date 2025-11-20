@@ -9,6 +9,21 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # project
 project(LEN VERSION 1.0.0 LANGUAGES C CXX)
 
+# Ensure MSVC Debug builds use Edit-and-Continue (/ZI) and do not use /GL
+if (MSVC)
+    # Remove Whole Program Optimization from Debug flags if present
+    string(REPLACE "/GL" "" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+    string(REPLACE "/GL" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+
+    # Use Program Database for Edit & Continue
+    set(CMAKE_C_FLAGS_DEBUG   "${CMAKE_C_FLAGS_DEBUG} /ZI")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI")
+
+    # Ensure linker generates debug info and allows incremental linking for Debug
+    set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /DEBUG /INCREMENTAL")
+    set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} /DEBUG /INCREMENTAL")
+endif()
+
 # build only on Windows
 if (NOT WIN32)
     message(FATAL_ERROR "This project is configured to build only on Windows (WIN32). Aborting.")
