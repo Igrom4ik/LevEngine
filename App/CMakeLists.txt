@@ -20,11 +20,23 @@ set(APP_SOURCES
         Source/Game.hpp
         Source/pch.cpp
         Source/pch.hpp
+        Source/TestObject.cpp
+        Source/TestObject.hpp
         ${CMAKE_CURRENT_BINARY_DIR}/EngineConfig.h
 )
 
 # Create application target from sources
 add_executable(${APP_TARGET} ${APP_SOURCES} "Source/Game.cpp")
+
+# Ensure MSVC Debug builds for the application use /ZI (Edit-and-Continue)
+if (MSVC)
+    target_compile_options(${APP_TARGET} PRIVATE
+        $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:MSVC>>:/ZI>
+    )
+    target_link_options(${APP_TARGET} PRIVATE
+        $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:MSVC>>:/DEBUG;/INCREMENTAL>
+    )
+endif()
 
 # Link engine library (engine target should export include dirs and dependencies)
 target_link_libraries(${APP_TARGET} PRIVATE ${PROJECT_NAME}Lib)

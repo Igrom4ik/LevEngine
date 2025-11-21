@@ -22,26 +22,35 @@ jobs:
       - name: Update submodules
         run: git submodule update --init --recursive
 
-      - name: Setup tools (Windows)
-        run: |
-          choco install -y ninja cmake || true
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.31.6'
+
+      - name: Setup Ninja
+        uses: seanmiddleditch/gha-setup-ninja@master
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
 
       - name: Configure (CMake)
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+        run: cmake --preset reliz
 
       - name: Build
-        run: cmake --build build --config Release -- -j 2
+        run: cmake --build --preset reliz
 
       - name: Run tests
         run: |
-          if [ -f build/CTestTestfile.cmake ]; then
-            ctest --test-dir build --output-on-failure || true
+          if [ -f cmake-build-release/CTestTestfile.cmake ]; then
+            ctest --test-dir cmake-build-release --output-on-failure || true
           fi
         shell: bash
 
       - name: Package (CPack or zip)
         run: |
-          cd build
+          cd cmake-build-release
           if command -v cpack >/dev/null 2>&1; then
             cpack -C Release || true
           else
@@ -57,13 +66,13 @@ jobs:
         with:
           name: HuyEngine-${{ matrix.os }}-${{ github.run_id }}
           path: |
-            build/*.zip
-            build/*.tar.gz
-            build/*.tgz
-            build/*.7z
-            build/*.msi
-            build/*.exe
-            build/artifacts/**
+            cmake-build-release/*.zip
+            cmake-build-release/*.tar.gz
+            cmake-build-release/*.tgz
+            cmake-build-release/*.7z
+            cmake-build-release/*.msi
+            cmake-build-release/*.exe
+            cmake-build-release/artifacts/**
 
   release:
     name: Create GitHub Release

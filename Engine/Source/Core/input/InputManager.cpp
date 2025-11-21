@@ -1,5 +1,5 @@
 #include "InputManager.hpp"
-#include <type_traits>7
+#include <type_traits>
 
 namespace LEN
 {
