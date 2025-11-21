@@ -67,6 +67,60 @@ endif()
 
 message(STATUS "VENDOR: using VENDOR_DIR=${VENDOR_DIR} (ENGINE_VENDOR_DIR=${ENGINE_VENDOR_DIR})")
 
+# Add directory-level include for glm if present (ensures headers visible to all targets)
+if (EXISTS "${VENDOR_DIR}/glm")
+    message(STATUS "VENDOR: adding directory include ${VENDOR_DIR}/glm for GLM headers")
+    include_directories("${VENDOR_DIR}/glm")
+endif()
+
+# Ensure GLM headers from vendor are visible (handle official repo layout vendor/glm/glm and fallback vendor/glm)
+if (EXISTS "${VENDOR_DIR}/glm/glm")
+    message(STATUS "VENDOR: exposing include dir ${VENDOR_DIR}/glm for GLM headers (glm/glm layout)")
+    target_include_directories(${PROJECT_NAME}Lib PUBLIC "${VENDOR_DIR}/glm")
+elseif (EXISTS "${VENDOR_DIR}/glm")
+    message(STATUS "VENDOR: exposing include dir ${VENDOR_DIR}/glm for GLM headers (generic fallback)")
+    target_include_directories(${PROJECT_NAME}Lib PUBLIC "${VENDOR_DIR}/glm")
+endif()
+
+# GLM (header-only math library)
+# Try system glm, then prefer official vendor submodule layout (vendor/glm/glm), then other vendor layouts, then FetchContent fallback
+find_package(glm QUIET)
+if (TARGET glm::glm)
+    message(STATUS "VENDOR: Found GLM package; linking glm::glm")
+    target_link_libraries(${PROJECT_NAME}Lib PUBLIC glm::glm)
+else()
+    # Official GLM repo layout: vendor/glm/glm/CMakeLists.txt
+    if (EXISTS "${VENDOR_DIR}/glm/glm/CMakeLists.txt")
+        message(STATUS "VENDOR: adding glm subdirectory from ${VENDOR_DIR}/glm/glm (official layout)")
+        add_subdirectory("${VENDOR_DIR}/glm/glm" "${CMAKE_CURRENT_BINARY_DIR}/vendor_glm_build")
+        if (TARGET glm::glm)
+            message(STATUS "VENDOR: linked glm::glm from vendor submodule (glm/glm)")
+            target_link_libraries(${PROJECT_NAME}Lib PUBLIC glm::glm)
+        endif()
+    elseif (EXISTS "${VENDOR_DIR}/glm/CMakeLists.txt")
+        # Some layouts provide CMakeLists at vendor/glm
+        message(STATUS "VENDOR: adding glm subdirectory from ${VENDOR_DIR}/glm")
+        add_subdirectory("${VENDOR_DIR}/glm" "${CMAKE_CURRENT_BINARY_DIR}/vendor_glm_build")
+        if (TARGET glm::glm)
+            message(STATUS "VENDOR: linked glm::glm from vendor submodule")
+            target_link_libraries(${PROJECT_NAME}Lib PUBLIC glm::glm)
+        endif()
+    else()
+        message(STATUS "VENDOR: glm not found as a CMake subdir; will rely on exposed include dirs or FetchContent fallback")
+        include(FetchContent)
+        FetchContent_Declare(
+            glm
+            GIT_REPOSITORY https://github.com/g-truc/glm.git
+            GIT_TAG 1.0.2
+        )
+        FetchContent_MakeAvailable(glm)
+        if (TARGET glm::glm)
+            message(STATUS "VENDOR: FetchContent provided glm; linking glm::glm")
+            target_link_libraries(${PROJECT_NAME}Lib PUBLIC glm::glm)
+        endif()
+    endif()
+endif()
+
 # Expose GLEW includes to consumers of the engine library if available
 if (EXISTS "${VENDOR_DIR}/glew/include")
     target_include_directories(${PROJECT_NAME}Lib PUBLIC "${VENDOR_DIR}/glew/include")
