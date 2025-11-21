@@ -9,11 +9,15 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # project
 project(LEN VERSION 1.0.0 LANGUAGES C CXX)
 
-# Ensure MSVC Debug builds use Edit-and-Continue (/ZI) and do not use /GL
+# Ensure MSVC Debug builds use Edit-and-Continue (/ZI) and do not use /GL or /Zi
 if (MSVC)
     # Remove Whole Program Optimization from Debug flags if present
     string(REPLACE "/GL" "" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
     string(REPLACE "/GL" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+
+    # Remove plain /Zi if present so it does not override /ZI
+    string(REPLACE "/Zi" "" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+    string(REPLACE "/Zi" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 
     # Use Program Database for Edit & Continue
     set(CMAKE_C_FLAGS_DEBUG   "${CMAKE_C_FLAGS_DEBUG} /ZI")
