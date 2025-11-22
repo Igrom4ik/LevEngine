@@ -1,7 +1,8 @@
-#include "Core/render/Render.hpp"
+#include "Core/render/RenderQueue.hpp"
 #include "Core/render/Mesh.hpp"
 #include "Core/render/Material.hpp"
 #include "Core/graphics/GraphicsAPI.hpp"
+#include "Core/graphics/ShaderProgram.hpp"
 
 
 
@@ -17,6 +18,7 @@ namespace LEN
 		for (auto& command : m_commands)
 		{
 			graphicsAPI.BindMaterial(command.material);
+			command.material->GetShaderProgram()->SetUniform("uModel", command.modelMatrix);
 			graphicsAPI.BindMesh(command.mesh);
 			graphicsAPI.DrawMesh(command.mesh);
 		}

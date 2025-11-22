@@ -54,6 +54,12 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_SUPPRESS_REGENERATION TRUE)
 
+# If vendor GLFW exists inside Engine add it early so targets are available to Engine and App
+if (EXISTS "${CMAKE_SOURCE_DIR}/Engine/vendor/glfw/CMakeLists.txt")
+    message(STATUS "TOP: Found vendor GLFW at ${CMAKE_SOURCE_DIR}/Engine/vendor/glfw - adding early")
+    add_subdirectory("${CMAKE_SOURCE_DIR}/Engine/vendor/glfw" "${CMAKE_BINARY_DIR}/vendor_glfw_build_top")
+endif()
+
 add_subdirectory(Engine)
 
 # Add application subdirectory which creates LENApp from App/Source
@@ -105,3 +111,7 @@ add_custom_target(package-release-help
     COMMAND ${CMAKE_COMMAND} -E echo "Run: cmake --build <build-dir> --target package-release --config Release"
     COMMENT "Show how to run package-release target"
 )
+
+# Optional: default to not allowing network fetches in IDEs to avoid blocking Visual Studio configuration
+option(ENGINE_ALLOW_FETCHCONTENT "Allow CMake to fetch vendor dependencies from network (OFF recommended for IDEs)" OFF)
+message(STATUS "TOP: ENGINE_ALLOW_FETCHCONTENT=${ENGINE_ALLOW_FETCHCONTENT}")

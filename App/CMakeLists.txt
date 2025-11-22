@@ -18,8 +18,6 @@ set(APP_SOURCES
         Source/main.cpp
         Source/Game.cpp
         Source/Game.hpp
-        Source/pch.cpp
-        Source/pch.hpp
         Source/TestObject.cpp
         Source/TestObject.hpp
         ${CMAKE_CURRENT_BINARY_DIR}/EngineConfig.h
@@ -40,6 +38,12 @@ endif()
 
 # Link engine library (engine target should export include dirs and dependencies)
 target_link_libraries(${APP_TARGET} PRIVATE ${PROJECT_NAME}Lib)
+
+# Also link GLFW directly into the application if the glfw target exists
+if (TARGET glfw)
+    message(STATUS "APP: Linking glfw into ${APP_TARGET}")
+    target_link_libraries(${APP_TARGET} PRIVATE glfw)
+endif()
 
 # If engine didn't provide GLEW targets, try system find_package as a fallback
 if (NOT TARGET glew_s AND NOT TARGET glew)
