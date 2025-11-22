@@ -124,7 +124,14 @@ namespace LEN
 			m_graphicsAPI.SetColor(LEN::Color::BLACK, 1.0f);
             m_graphicsAPI.ClearBuffers();
 
-			m_renderQueue.Draw(m_graphicsAPI);
+            CameraData cameraData;
+            if (m_currentScene) {
+                if (auto cameraObject = m_currentScene->GetMainCamera()) {
+                    // Logic for matrices
+
+                }
+            }
+			m_renderQueue.Draw(m_graphicsAPI, cameraData);
 
             glfwSwapBuffers(m_window); // Swap front and back buffers
         }
@@ -172,4 +179,11 @@ namespace LEN
 		return m_renderQueue;
     }
 
+    void Engine::SetScene(Scene *scene) {
+        m_currentScene.reset(scene);
+    }
+
+    Scene * Engine::GetCurrentScene() {
+        return m_currentScene.get();
+    }
 } // namespace LEN
