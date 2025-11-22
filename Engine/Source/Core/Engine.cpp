@@ -43,6 +43,39 @@ namespace LEN {
             inputManager.SetKeyPressed(mapped, false);
     }
 
+    void mouseButtonCallback(GLFWwindow * /*window*/, int button, int action, int /*mods*/) {
+        auto &inputManager = LEN::Engine::GetInstance().GetInputManager();
+        LEN::Key mapped;
+        switch (button) {
+            case GLFW_MOUSE_BUTTON_LEFT:
+                mapped = LEN::Key::MouseLeft;
+                break;
+            case GLFW_MOUSE_BUTTON_RIGHT:
+                mapped = LEN::Key::MouseRight;
+                break;
+            case GLFW_MOUSE_BUTTON_MIDDLE:
+                mapped = LEN::Key::MouseMiddle;
+                break;
+            default:
+                return; // ignore unmapped buttons
+        }
+
+        // Update input manager based on action
+        if (action == GLFW_PRESS) {
+            inputManager.SetMouseButtonPressed(mapped, true);
+        } else if (action == GLFW_RELEASE) {
+            inputManager.SetMouseButtonPressed(mapped, false);
+        }
+    }
+
+    void mouseCursorPositionCallback(GLFWwindow *window, double xpos, double ypos) {
+        auto &inputManager = LEN::Engine::GetInstance().GetInputManager();
+        inputManager.SetMousePositionOld(inputManager.GetMousePositionCurrent());
+
+        glm::vec2 currentPos(static_cast<float>(xpos), static_cast<float>(ypos));
+        inputManager.SetMousePositionCurrent(currentPos);
+    }
+
     Engine &Engine::GetInstance() {
         static Engine instance;
         return instance;
@@ -80,6 +113,9 @@ namespace LEN {
         }
 
         glfwSetKeyCallback(m_window, keyCallback);
+        // Register mouse button callback to handle mouse clicks
+        glfwSetMouseButtonCallback(m_window, mouseButtonCallback);
+        glfwSetCursorPosCallback(m_window, mouseCursorPositionCallback);
 
 
         /************************************************************************
@@ -95,6 +131,7 @@ namespace LEN {
             return false;
         }
 
+        m_graphicsAPI.Init();
         return m_application->Init();
     }
 
@@ -114,7 +151,7 @@ namespace LEN {
             m_graphicsAPI.SetColor(LEN::Color::BLACK, 1.0f);
             m_graphicsAPI.ClearBuffers();
 
-            CameraData cameraData;
+            CameraData cameraData{};
 
             int width(0), height(0);
             glfwGetWindowSize(m_window, &width, &height);
@@ -133,6 +170,8 @@ namespace LEN {
             m_renderQueue.Draw(m_graphicsAPI, cameraData);
 
             glfwSwapBuffers(m_window); // Swap front and back buffers
+
+            m_inputManager.SetMousePositionOld(m_inputManager.GetMousePositionCurrent()); // Update old mouse position
         }
     }
 

@@ -5,13 +5,16 @@
 #include <iostream>
 
 
+namespace LEN {
+    bool GraphicsAPI::Init() {
+        glEnable(GL_DEPTH_TEST);
+        return true;
+    }
 
-namespace LEN
-{
-	std::shared_ptr<ShaderProgram> LEN::GraphicsAPI::CreateShaderProgram(const std::string& vertexSource, const std::string& fragmentSource) 
-	{
+    std::shared_ptr<ShaderProgram> LEN::GraphicsAPI::CreateShaderProgram(
+        const std::string &vertexSource, const std::string &fragmentSource) {
         GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        const char* vertexShaderCStr = vertexSource.c_str();
+        const char *vertexShaderCStr = vertexSource.c_str();
         glShaderSource(vertexShader, 1, &vertexShaderCStr, nullptr);
         glCompileShader(vertexShader);
 
@@ -21,7 +24,7 @@ namespace LEN
             char infoLog[512];
             glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
             std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-			return nullptr;
+            return nullptr;
         }
 
 
@@ -30,7 +33,7 @@ namespace LEN
         out vec4 FragColor;
 
         in vec3 vColor;
-        uniform vec4 uColor;        
+        uniform vec4 uColor;
 
         void main()
         {
@@ -39,7 +42,7 @@ namespace LEN
     )";
 
         GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        const char* fragmentShaderSCStr = fragmentSource.c_str();
+        const char *fragmentShaderSCStr = fragmentSource.c_str();
         glShaderSource(fragmentShader, 1, &fragmentShaderSCStr, nullptr);
         glCompileShader(fragmentShader);
 
@@ -62,28 +65,25 @@ namespace LEN
             char infoLog[512];
             glGetProgramInfoLog(shaderProgramID, 512, nullptr, infoLog);
             std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" <<
-                infoLog << std::endl;
-			return nullptr;
+                    infoLog << std::endl;
+            return nullptr;
         }
 
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
-		return std::make_shared<ShaderProgram>(shaderProgramID); // Return the created ShaderProgram
-    
+        return std::make_shared<ShaderProgram>(shaderProgramID); // Return the created ShaderProgram
     }
 
-    GLuint GraphicsAPI::CreateVertexBuffer(const std::vector<float>& vertices)
-    {
+    GLuint GraphicsAPI::CreateVertexBuffer(const std::vector<float> &vertices) {
         GLuint VBO = 0;
         glGenBuffers(1, &VBO);
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-		return VBO;
+        return VBO;
     }
 
-    GLuint GraphicsAPI::CreateIndexBuffer(const std::vector<uint32_t>& indices)
-    {
+    GLuint GraphicsAPI::CreateIndexBuffer(const std::vector<uint32_t> &indices) {
         GLuint EBO = 0;
         glGenBuffers(1, &EBO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -92,48 +92,36 @@ namespace LEN
         return EBO;
     }
 
-    void GraphicsAPI::BindShaderProgram(ShaderProgram* shderProgram)
-    {
-        if (shderProgram)
-        {
+    void GraphicsAPI::BindShaderProgram(ShaderProgram *shderProgram) {
+        if (shderProgram) {
             shderProgram->Bind();
         }
     }
 
-    void GraphicsAPI::BindMaterial(Material* material)
-    {
-        if (material)
-        {
-			material->Bind();
+    void GraphicsAPI::BindMaterial(Material *material) {
+        if (material) {
+            material->Bind();
         }
     }
 
-    void GraphicsAPI::BindMesh(Mesh* mesh)
-    {
-        if (mesh)
-        {
-			mesh->Bind();
+    void GraphicsAPI::BindMesh(Mesh *mesh) {
+        if (mesh) {
+            mesh->Bind();
         }
     }
 
-    void GraphicsAPI::DrawMesh(Mesh* mesh)
-    {
-        if (mesh)
-        {
+    void GraphicsAPI::DrawMesh(Mesh *mesh) {
+        if (mesh) {
             mesh->Draw();
         }
     }
 
-    void GraphicsAPI::SetColor(Color color, float a)
-    {
-       
+    void GraphicsAPI::SetColor(Color color, float a) {
         const ColorRGB c = LEN::GetColorRGB(color);
         glClearColor(c.r, c.g, c.b, a);
     }
 
-    void GraphicsAPI::ClearBuffers()
-    {
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    void GraphicsAPI::ClearBuffers() {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
-
 }
