@@ -3,10 +3,10 @@
 #include "graphics/ShaderProgram.hpp"
 #include "Core/graphics/GraphicsAPI.hpp"
 #include "Core/render/RenderQueue.hpp"
-#include "EngineConfig.h"
-#include "Core/graphics/Colors.hpp"
+#include "Core/scene/Scene.hpp"
 #include <memory>
 #include <chrono>
+
 
 struct GLFWwindow;
 namespace LEN
@@ -43,6 +43,8 @@ namespace LEN
 		GraphicsAPI& GetGraphicsAPI();
         RenderQueue& GetRenderQueue();
 
+        void SetScene(Scene* scene);
+        Scene* GetCurrentScene();
 
     private:
         std::unique_ptr<Application> m_application;
@@ -53,6 +55,8 @@ namespace LEN
 
 		GraphicsAPI m_graphicsAPI;
 		RenderQueue m_renderQueue;
+
+        std::unique_ptr<Scene> m_currentScene;
 
     };
 }  // namespace LEN
