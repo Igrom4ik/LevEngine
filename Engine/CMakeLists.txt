@@ -6,6 +6,27 @@ set(LEN_VERSION_PATCH ${PROJECT_VERSION_PATCH})
 set(LEN_VERSION ${PROJECT_VERSION})
 configure_file(EngineConfig.h.template ${CMAKE_CURRENT_BINARY_DIR}/EngineConfig.h)
 
+# --- Early vendor detection: ensure GLFW subdirectory is added before engine target is created ---
+# Allow overriding vendor directory from cache/preset
+set(ENGINE_VENDOR_DIR "" CACHE PATH "Explicit path to Engine's vendor directory (overrides auto-detection)")
+
+if (ENGINE_VENDOR_DIR)
+    set(_VENDOR_DIR_EARLY "${ENGINE_VENDOR_DIR}")
+elseif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vendor")
+    set(_VENDOR_DIR_EARLY "${CMAKE_CURRENT_SOURCE_DIR}/vendor")
+else()
+    set(_VENDOR_DIR_EARLY "${CMAKE_SOURCE_DIR}/vendor")
+endif()
+
+if (EXISTS "${_VENDOR_DIR_EARLY}/glfw/CMakeLists.txt")
+    if (NOT TARGET glfw)
+        message(STATUS "VENDOR-EARLY: adding GLFW subdirectory from ${_VENDOR_DIR_EARLY}/glfw before engine target creation")
+        add_subdirectory("${_VENDOR_DIR_EARLY}/glfw" "${CMAKE_CURRENT_BINARY_DIR}/vendor_glfw_build_early")
+    else()
+        message(STATUS "VENDOR-EARLY: glfw target already exists, skipping add_subdirectory")
+    endif()
+endif()
+
 set(ENGINE_SOURCES
         Source/Core/Engine.cpp
         Source/Core/Engine.hpp
@@ -23,15 +44,23 @@ set(ENGINE_SOURCES
         Source/Core/render/Mesh.cpp
         Source/Core/render/Mesh.hpp
         Source/Core/render/VertexLayout.hpp
-        Source/Core/render/Render.cpp
-        Source/Core/render/Render.hpp
+        Source/Core/render/RenderQueue.cpp
+        Source/Core/render/RenderQueue.hpp
         Source/Core/graphics/Colors.hpp
         Source/Core/scene/GameObject.cpp
         Source/Core/scene/GameObject.hpp
         Source/Core/scene/Scene.cpp
         Source/Core/scene/Scene.hpp
+        Source/Core/scene/Component.cpp
+        Source/Core/scene/Component.hpp
+        Source/Core/scene/components/MeshComponent.cpp
+        Source/Core/scene/components/MeshComponent.hpp
 
         ${CMAKE_CURRENT_BINARY_DIR}/EngineConfig.h
+        Source/Core/scene/Component.cpp
+        Source/Core/scene/Component.hpp
+        Source/Core/scene/components/MeshComponent.cpp
+        Source/Core/scene/components/MeshComponent.hpp
 )
 
 add_library(${PROJECT_NAME}Lib STATIC ${ENGINE_SOURCES})
@@ -46,9 +75,6 @@ if (MSVC)
 
     # Also set Visual Studio specific property for Edit-and-Continue (helps VS generators)
     set_target_properties(${PROJECT_NAME}Lib PROPERTIES VS_DEBUG_INFORMATION_FORMAT "EditAndContinue")
-
-    # Force Render.cpp to be compiled with /ZI explicitly to avoid file-level overrides
-    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/Source/Core/render/Render.cpp PROPERTIES COMPILE_FLAGS "/ZI")
 endif()
 
 target_include_directories(${PROJECT_NAME}Lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Source ${CMAKE_CURRENT_BINARY_DIR})
@@ -67,38 +93,34 @@ endif()
 
 message(STATUS "VENDOR: using VENDOR_DIR=${VENDOR_DIR} (ENGINE_VENDOR_DIR=${ENGINE_VENDOR_DIR})")
 
+# Option: don't perform network fetches during configuration by default (prevents VS hang)
+option(ENGINE_ALLOW_FETCHCONTENT "Allow CMake to fetch vendor dependencies from network (OFF recommended for IDEs)" OFF)
+message(STATUS "VENDOR: ENGINE_ALLOW_FETCHCONTENT=${ENGINE_ALLOW_FETCHCONTENT}")
+
 # Add directory-level include for glm if present (ensures headers visible to all targets)
+# NOTE: avoid global include_directories which can interfere with system include order in some toolchains.
 if (EXISTS "${VENDOR_DIR}/glm")
-    message(STATUS "VENDOR: adding directory include ${VENDOR_DIR}/glm for GLM headers")
-    include_directories("${VENDOR_DIR}/glm")
+    message(STATUS "VENDOR: glm folder detected at ${VENDOR_DIR}/glm; will add to target includes (no global include_directories)")
+    # Do not call include_directories() globally; use target_include_directories below so ordering is controlled per-target
 endif()
 
 # Ensure GLM headers from vendor are visible (handle official repo layout vendor/glm/glm and fallback vendor/glm)
 if (EXISTS "${VENDOR_DIR}/glm/glm")
-    message(STATUS "VENDOR: exposing include dir ${VENDOR_DIR}/glm for GLM headers (glm/glm layout)")
-    target_include_directories(${PROJECT_NAME}Lib PUBLIC "${VENDOR_DIR}/glm")
+    message(STATUS "VENDOR: exposing include dir ${VENDOR_DIR}/glm/glm for GLM headers (glm/glm layout)")
+    target_include_directories(${PROJECT_NAME}Lib PUBLIC "${VENDOR_DIR}/glm/glm")
 elseif (EXISTS "${VENDOR_DIR}/glm")
     message(STATUS "VENDOR: exposing include dir ${VENDOR_DIR}/glm for GLM headers (generic fallback)")
     target_include_directories(${PROJECT_NAME}Lib PUBLIC "${VENDOR_DIR}/glm")
 endif()
 
 # GLM (header-only math library)
-# Try system glm, then prefer official vendor submodule layout (vendor/glm/glm), then other vendor layouts, then FetchContent fallback
+# Try system glm, then prefer official vendor submodule layout (vendor/glm), then FetchContent fallback
 find_package(glm QUIET)
 if (TARGET glm::glm)
     message(STATUS "VENDOR: Found GLM package; linking glm::glm")
     target_link_libraries(${PROJECT_NAME}Lib PUBLIC glm::glm)
 else()
-    # Official GLM repo layout: vendor/glm/glm/CMakeLists.txt
-    if (EXISTS "${VENDOR_DIR}/glm/glm/CMakeLists.txt")
-        message(STATUS "VENDOR: adding glm subdirectory from ${VENDOR_DIR}/glm/glm (official layout)")
-        add_subdirectory("${VENDOR_DIR}/glm/glm" "${CMAKE_CURRENT_BINARY_DIR}/vendor_glm_build")
-        if (TARGET glm::glm)
-            message(STATUS "VENDOR: linked glm::glm from vendor submodule (glm/glm)")
-            target_link_libraries(${PROJECT_NAME}Lib PUBLIC glm::glm)
-        endif()
-    elseif (EXISTS "${VENDOR_DIR}/glm/CMakeLists.txt")
-        # Some layouts provide CMakeLists at vendor/glm
+    if (EXISTS "${VENDOR_DIR}/glm/CMakeLists.txt")
         message(STATUS "VENDOR: adding glm subdirectory from ${VENDOR_DIR}/glm")
         add_subdirectory("${VENDOR_DIR}/glm" "${CMAKE_CURRENT_BINARY_DIR}/vendor_glm_build")
         if (TARGET glm::glm)
@@ -107,16 +129,20 @@ else()
         endif()
     else()
         message(STATUS "VENDOR: glm not found as a CMake subdir; will rely on exposed include dirs or FetchContent fallback")
-        include(FetchContent)
-        FetchContent_Declare(
-            glm
-            GIT_REPOSITORY https://github.com/g-truc/glm.git
-            GIT_TAG 1.0.2
-        )
-        FetchContent_MakeAvailable(glm)
-        if (TARGET glm::glm)
-            message(STATUS "VENDOR: FetchContent provided glm; linking glm::glm")
-            target_link_libraries(${PROJECT_NAME}Lib PUBLIC glm::glm)
+        if (ENGINE_ALLOW_FETCHCONTENT)
+            include(FetchContent)
+            FetchContent_Declare(
+                glm
+                GIT_REPOSITORY https://github.com/g-truc/glm.git
+                GIT_TAG 1.0.2
+            )
+            FetchContent_MakeAvailable(glm)
+            if (TARGET glm::glm)
+                message(STATUS "VENDOR: FetchContent provided glm; linking glm::glm")
+                target_link_libraries(${PROJECT_NAME}Lib PUBLIC glm::glm)
+            endif()
+        else()
+            message(STATUS "VENDOR: FetchContent disabled for glm (ENGINE_ALLOW_FETCHCONTENT=OFF). If headers missing, set ENGINE_ALLOW_FETCHCONTENT=ON or provide vendor/glm locally.")
         endif()
     endif()
 endif()
@@ -138,9 +164,13 @@ if (VENDOR_GLFW_USE_CLONE)
     set(_glfw_dir "${VENDOR_DIR}/glfw")
     message(STATUS "VENDOR: checking for GLFW in ${_glfw_dir}")
     if (EXISTS "${_glfw_dir}/CMakeLists.txt")
-        message(STATUS "VENDOR: adding GLFW subdirectory from ${_glfw_dir}")
-        add_subdirectory("${_glfw_dir}" "${CMAKE_CURRENT_BINARY_DIR}/vendor_glfw_build")
-    elseif (VENDOR_GLFW_FROM_GIT)
+        if (NOT TARGET glfw)
+            message(STATUS "VENDOR: adding GLFW subdirectory from ${_glfw_dir}")
+            add_subdirectory("${_glfw_dir}" "${CMAKE_CURRENT_BINARY_DIR}/vendor_glfw_build")
+        else()
+            message(STATUS "VENDOR: glfw target already exists, skipping add_subdirectory")
+        endif()
+    elseif (VENDOR_GLFW_FROM_GIT AND ENGINE_ALLOW_FETCHCONTENT)
         message(STATUS "VENDOR: GLFW not found locally, will FetchContent")
         include(FetchContent)
         FetchContent_Declare(
@@ -150,10 +180,10 @@ if (VENDOR_GLFW_USE_CLONE)
         )
         FetchContent_MakeAvailable(glfw)
     else()
-        message(STATUS "VENDOR: GLFW not available in ${_glfw_dir} (set VENDOR_GLFW_USE_CLONE=OFF and VENDOR_GLFW_FROM_GIT=ON to fetch)")
+        message(STATUS "VENDOR: GLFW not available in ${_glfw_dir} (set VENDOR_GLFW_USE_CLONE=OFF and VENDOR_GLFW_FROM_GIT=ON and ENGINE_ALLOW_FETCHCONTENT=ON to fetch)")
     endif()
 else()
-    if (VENDOR_GLFW_FROM_GIT)
+    if (VENDOR_GLFW_FROM_GIT AND ENGINE_ALLOW_FETCHCONTENT)
         include(FetchContent)
         FetchContent_Declare(
             glfw
@@ -162,6 +192,12 @@ else()
         )
         FetchContent_MakeAvailable(glfw)
     endif()
+endif()
+
+# If GLFW headers exist in vendor folder expose them so includes like <GLFW/glfw3.h> resolve
+if (EXISTS "${VENDOR_DIR}/glfw/include")
+    message(STATUS "VENDOR: exposing include dir ${VENDOR_DIR}/glfw/include for GLFW headers")
+    target_include_directories(${PROJECT_NAME}Lib PUBLIC "${VENDOR_DIR}/glfw/include")
 endif()
 
 # Link vendor libraries to engine library if targets are present

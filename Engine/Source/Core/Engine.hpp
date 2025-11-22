@@ -2,7 +2,7 @@
 #include "input/InputManager.hpp"
 #include "graphics/ShaderProgram.hpp"
 #include "Core/graphics/GraphicsAPI.hpp"
-#include "Core/render/Render.hpp"
+#include "Core/render/RenderQueue.hpp"
 #include "EngineConfig.h"
 #include "Core/graphics/Colors.hpp"
 #include <memory>
