@@ -1,5 +1,7 @@
 # common options
 set(APP_TARGET LENApp)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # version
 set(LEN_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
@@ -13,6 +15,8 @@ if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Source/Version.h.in")
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Source/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/Version.h)
     list(APPEND APP_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/Version.h)
 endif ()
+
+set(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 
 set(APP_SOURCES
         Source/main.cpp
@@ -29,12 +33,12 @@ add_executable(${APP_TARGET} ${APP_SOURCES} "Source/Game.cpp")
 # Ensure MSVC Debug builds for the application use /ZI (Edit-and-Continue)
 if (MSVC)
     target_compile_options(${APP_TARGET} PRIVATE
-        $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:MSVC>>:/ZI>
+            $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:MSVC>>:/ZI>
     )
     target_link_options(${APP_TARGET} PRIVATE
-        $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:MSVC>>:/DEBUG;/INCREMENTAL>
+            $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:MSVC>>:/DEBUG;/INCREMENTAL>
     )
-endif()
+endif ()
 
 # Link engine library (engine target should export include dirs and dependencies)
 target_link_libraries(${APP_TARGET} PRIVATE ${PROJECT_NAME}Lib)
@@ -43,7 +47,7 @@ target_link_libraries(${APP_TARGET} PRIVATE ${PROJECT_NAME}Lib)
 if (TARGET glfw)
     message(STATUS "APP: Linking glfw into ${APP_TARGET}")
     target_link_libraries(${APP_TARGET} PRIVATE glfw)
-endif()
+endif ()
 
 # If engine didn't provide GLEW targets, try system find_package as a fallback
 if (NOT TARGET glew_s AND NOT TARGET glew)
@@ -53,10 +57,10 @@ if (NOT TARGET glew_s AND NOT TARGET glew)
     elseif (GLEW_FOUND)
         target_include_directories(${APP_TARGET} PRIVATE ${GLEW_INCLUDE_DIRS})
         target_link_libraries(${APP_TARGET} PRIVATE ${GLEW_LIBRARIES})
-    else()
+    else ()
         message(WARNING "GLEW not found for ${APP_TARGET}; engine should provide it or install system GLEW.")
-    endif()
-endif()
+    endif ()
+endif ()
 
 target_include_directories(${APP_TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Source ${CMAKE_CURRENT_BINARY_DIR})
 

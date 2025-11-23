@@ -1,4 +1,8 @@
 cmake_minimum_required(VERSION 3.31.6)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # version
 set(LEN_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
 set(LEN_VERSION_MINOR ${PROJECT_VERSION_MINOR})
@@ -26,6 +30,11 @@ if (EXISTS "${_VENDOR_DIR_EARLY}/glfw/CMakeLists.txt")
         message(STATUS "VENDOR-EARLY: glfw target already exists, skipping add_subdirectory")
     endif ()
 endif ()
+
+configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
+        ${CMAKE_CURRENT_BINARY_DIR}/config.h
+)
 
 set(ENGINE_SOURCES
         Source/Core/Engine.cpp
@@ -59,8 +68,7 @@ set(ENGINE_SOURCES
         Source/Core/scene/components/CameraComponent.hpp
         Source/Core/scene/components/PlayerControllerComponent.cpp
         Source/Core/scene/components/PlayerControllerComponent.hpp
-
-
+        io/FileSystem.cpp
 )
 
 add_library(${PROJECT_NAME}Lib STATIC ${ENGINE_SOURCES})
@@ -77,7 +85,7 @@ if (MSVC)
     set_target_properties(${PROJECT_NAME}Lib PROPERTIES VS_DEBUG_INFORMATION_FORMAT "EditAndContinue")
 endif ()
 
-target_include_directories(${PROJECT_NAME}Lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Source ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(${PROJECT_NAME}Lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/Source ${CMAKE_CURRENT_BINARY_DIR})
 
 # --- Vendor libraries (moved from top-level CMakeLists) ---
 # VENDOR_DIR is computed from previously set ENGINE_VENDOR_DIR
@@ -271,5 +279,19 @@ install(TARGETS ${PROJECT_NAME}Lib
         RUNTIME DESTINATION bin
 )
 
+target_include_directories(${PROJECT_NAME}Lib PRIVATE ${PROJECT_BINARY_DIR})
+
 include(${CMAKE_SOURCE_DIR}/Automation/CMAKE/CmakeHelpers.cmake)
 create_ide_folders(ENGINE_SOURCES)
+
+# Only add post-build asset copy if ASSETS_DIR is defined and the directory exists
+if (DEFINED ASSETS_DIR AND EXISTS "${ASSETS_DIR}")
+    add_custom_command(TARGET ${PROJECT_NAME}Lib
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${ASSETS_DIR}"
+            "${CMAKE_BINARY_DIR}/assets"
+    )
+else ()
+    message(STATUS "ASSETS_DIR not set or does not exist; skipping copy of assets for ${PROJECT_NAME}Lib")
+endif ()
