@@ -39,6 +39,15 @@ LEN — экспериментальный игровой движок на C++ 
     - В `PlayerControllerComponent::Update` проверка нажатия мыши заменена на
       `isMouseButtonPressed(LEN::Key::MouseLeft)` (раньше некорректно делался static_cast от GLFW константы).
 
+- Обновлена реализация `CameraComponent::GetViewMatrix()` и документация по камере:
+    - Трансляция теперь явно записывается в 4-й столбец матрицы: `mat[3] = glm::vec4(position, 1.0f)`.
+    - Это соответствует column-major конвенции GLM: `mat[3]` хранит вектор трансляции (x,y,z,1).
+    - Далее возвращается `glm::inverse(mat)`, что даёт корректную матрицу вида (view = inverse(worldTransform)).
+    - Добавлен подробный документ `Docs/CameraComponent.md` с объяснениями, примерами (`glm::translate` vs direct
+      assignment), рекомендациями по управлению камерой (yaw/pitch) и проверками.
+    - В `Engine`/`App` добавлены небольшие комментарии о порядке матриц (uProjection * uView * uModel) и о том, что
+      вращение мышью обычно не умножается на deltaTime.
+
 ## Что это исправляет
 
 - Камера теперь корректно реагирует на движение мыши при зажатой левой кнопке: вычисляется дельта (current - old) и

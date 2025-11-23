@@ -8,7 +8,8 @@ Custom Game Engine built with C++ and CMake.
 
 > 📝 **Documentation and documentation design are powered by GitHub Copilot**
 
-**Note:** This is an educational project currently in WIP (work-in-progress). The project is released under a permissive license — everyone is welcome to study, modify, and fork the repository.
+**Note:** This is an educational project currently in WIP (work-in-progress). The project is released under a permissive
+license — everyone is welcome to study, modify, and fork the repository.
 
 ## 🚀 Quick Start
 
@@ -223,12 +224,15 @@ CUSTOM_CMAKE_FLAGS = ["-DENABLE_TESTING=ON"]
 - [Automation/BUILD_SYSTEM_README.md](Automation/BUILD_SYSTEM_README.md) - документация системы автоматизации
 - [Automation/BUILD_EXAMPLES.md](Automation/BUILD_EXAMPLES.md) - примеры использования
 - [Automation/BUILD_FAQ.md](Automation/BUILD_FAQ.md) - часто задаваемые вопросы
+- [Docs/CameraComponent.md](Docs/CameraComponent.md) - документация по `CameraComponent`: конвенции матриц, пример
+  реализации `GetViewMatrix()` и рекомендации по управлению камерой (yaw/pitch).
 
 ---
 
 ## License
 
-This project is an educational work-in-progress (WIP). It is released under a permissive license (MIT) — feel free to study, modify and fork the repository.
+This project is an educational work-in-progress (WIP). It is released under a permissive license (MIT) — feel free to
+study, modify and fork the repository.
 
 ---
 
