@@ -29,6 +29,7 @@ bool Game::Init() {
         void main()
         {
             vColor = color;
+            // Note: matrix multiplication order is uProjection * uView * uModel (column-major)
             gl_Position = uProjection * uView * uModel * vec4(position, 1.0);
         }
     )";
