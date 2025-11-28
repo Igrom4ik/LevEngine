@@ -48,6 +48,8 @@ set(ENGINE_SOURCES
         Source/Core/graphics/ShaderProgram.hpp
         Source/Core/graphics/GraphicsAPI.cpp
         Source/Core/graphics/GraphicsAPI.hpp
+        Source/Core/graphics/Texture.cpp
+        Source/Core/graphics/Texture.hpp
         Source/Core/render/Material.cpp
         Source/Core/render/Material.hpp
         Source/Core/render/Mesh.cpp
@@ -214,6 +216,18 @@ else ()
     message(STATUS "VENDOR: target 'glfw' not found; GLFW will not be linked")
 endif ()
 
+# Ensure system OpenGL is linked (on Windows this resolves opengl32.lib)
+find_package(OpenGL REQUIRED)
+if (TARGET OpenGL::GL)
+    message(STATUS "Linking system OpenGL (OpenGL::GL) into ${PROJECT_NAME}Lib")
+    target_link_libraries(${PROJECT_NAME}Lib PUBLIC OpenGL::GL)
+else ()
+    message(STATUS "OpenGL::GL target not found; trying legacy OpenGL libraries")
+    if (WIN32)
+        target_link_libraries(${PROJECT_NAME}Lib PUBLIC opengl32 glu32)
+    endif ()
+endif ()
+
 # GLEW: try to build as CMake subdir or use prebuilt/imported libs
 set(GLEW_SEARCH_CANDIDATES
         "${VENDOR_DIR}/glew"
@@ -266,6 +280,34 @@ if (DEFINED _glew_target_found AND NOT _glew_target_found STREQUAL "OFF")
     target_link_libraries(${PROJECT_NAME}Lib PRIVATE ${_glew_target_found})
 else ()
     message(STATUS "VENDOR: no GLEW target found; GLEW will not be linked")
+endif ()
+
+# --- stb_image (header-only) support ---
+# Prefer local vendor copy under ${VENDOR_DIR}/stb or ${VENDOR_DIR}/stb_image; otherwise optionally fetch via FetchContent
+option(VENDOR_STB_FROM_GIT "Use FetchContent to get stb (stb_image) from GitHub" OFF)
+if (EXISTS "${VENDOR_DIR}/stb")
+    message(STATUS "VENDOR: exposing include dir ${VENDOR_DIR}/stb for stb headers")
+    target_include_directories(${PROJECT_NAME}Lib PUBLIC "${VENDOR_DIR}/stb")
+elseif (EXISTS "${VENDOR_DIR}/stb_image")
+    message(STATUS "VENDOR: exposing include dir ${VENDOR_DIR}/stb_image for stb headers")
+    target_include_directories(${PROJECT_NAME}Lib PUBLIC "${VENDOR_DIR}/stb_image")
+else ()
+    if (VENDOR_STB_FROM_GIT AND ENGINE_ALLOW_FETCHCONTENT)
+        message(STATUS "VENDOR: Fetching stb via FetchContent")
+        include(FetchContent)
+        FetchContent_Declare(
+                stb
+                GIT_REPOSITORY https://github.com/nothings/stb.git
+                GIT_TAG master
+        )
+        FetchContent_MakeAvailable(stb)
+        if (DEFINED stb_SOURCE_DIR)
+            message(STATUS "VENDOR: FetchContent provided stb at ${stb_SOURCE_DIR}; exposing include dir")
+            target_include_directories(${PROJECT_NAME}Lib PUBLIC "${stb_SOURCE_DIR}")
+        endif ()
+    else ()
+        message(STATUS "VENDOR: stb not found locally; set VENDOR_STB_FROM_GIT=ON and ENGINE_ALLOW_FETCHCONTENT=ON to fetch")
+    endif ()
 endif ()
 
 # folders

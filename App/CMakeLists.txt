@@ -40,6 +40,14 @@ if (MSVC)
     )
 endif ()
 
+# Copy assets folder into target binary directory after build so runtime can access assets
+if (EXISTS "${ASSETS_DIR}")
+    add_custom_command(TARGET ${APP_TARGET} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${APP_TARGET}>/assets"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${ASSETS_DIR}" "$<TARGET_FILE_DIR:${APP_TARGET}>/assets"
+    )
+endif ()
+
 # Link engine library (engine target should export include dirs and dependencies)
 target_link_libraries(${APP_TARGET} PRIVATE ${PROJECT_NAME}Lib)
 

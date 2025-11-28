@@ -1,76 +1,15 @@
-# Ignore CMake and build artifacts
-/build/
-/build-*/
-/build-msvc/
-/cmake-build-debug/
-/cmake-build-release/
-/cmake-build-release-event-trace/
-cmake-build*/
-/CMakeFiles/
-/CMakeCache.txt
-/cmake_install.cmake
-/InstallScripts.json
-/TargetDirectories.txt
-/generate.stamp*
-/bin/
-/x64/
-*.vcxproj.user
-*.pdb
-*.obj
-*.o
-*.ilk
-*.exe
-*.log
-*.cache
-/.vs/
-/.idea/
-/.vscode/
-# Keep VSCode project configuration
-!/.vscode/tasks.json
-!/.vscode/launch.json
-!/.vscode/c_cpp_properties.json
-!/.vscode/settings.json
+# Ignore local secrets
+key.txt
 
-# Python cache
-__pycache__/
-*.pyc
+# Build artifacts
+cmake-build-debug/
+cmake-build-release/
 
-# Build state
-Automation/.build_state.json
+# Python venv
+.venv/
 
-# Ignore packaging and distribution
-dist/
-build-dist/
+# IDE and OS
+.vscode/
+.DS_Store
+Thumbs.db
 
-# Ignore user/editor/project specific files
-*.user
-*.suo
-
-# Keep repo-specific files in root
-!README.md
-
-# Keep docs in repo (moved to docs/)
-!docs/
-
-# Ignore common temp/editor files
-*.tmp*
-*~
-*.swp
-*.swo
-
-# PVS-Studio entries removed per request
-
-# Ignore FetchContent/_deps directories created by CMake
-_deps/
-cmake-build*/_deps/
-
-# Keep EngineConfig.h tracked
-EngineConfig.h
-
-# Local validation/build/test folders
-build_validate/
-build_validate*/
-staging/
-pkg_extract/
-package/
-vs-build/.vs/
