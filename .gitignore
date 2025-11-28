@@ -1,15 +1,44 @@
-# Ignore local secrets
-key.txt
+# Ignore Visual Studio/IDE caches
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
 
-# Build artifacts
+# Visual Studio intermediate files
+**/ipch/
+*.VC.db
+*.VC.opendb
+
+# Build directories
 cmake-build-debug/
 cmake-build-release/
+cmake-build-tracy-debug/
+cmake-build-tracy/
+cmake/
+build/
+bin/
 
-# Python venv
-.venv/
+# cmake files
+CMakeCache.txt
+CMakeFiles/
 
-# IDE and OS
-.vscode/
+# Temporary files
+*.tmp
+*.log
+*.obj
+*.pdb
+*.ilk
+*.idb
+
+# OS files
 .DS_Store
 Thumbs.db
+
+# tracy builds
+external/tracy/profiler/build/
+
+# git LFS placeholder
+*.lfs
 
