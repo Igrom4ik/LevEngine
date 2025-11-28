@@ -155,6 +155,56 @@ else ()
     endif ()
 endif ()
 
+# --- nlohmann/json support (vendor or FetchContent) ---
+# Prefer local vendor copy under ${VENDOR_DIR}/json or ${VENDOR_DIR}/nlohmann_json; otherwise optionally fetch via FetchContent
+if (EXISTS "${VENDOR_DIR}/nlohmann_json/CMakeLists.txt")
+    message(STATUS "VENDOR: adding nlohmann_json subdirectory from ${VENDOR_DIR}/nlohmann_json")
+    add_subdirectory("${VENDOR_DIR}/nlohmann_json" "${CMAKE_CURRENT_BINARY_DIR}/vendor_nlohmann_json_build")
+    if (TARGET nlohmann_json::nlohmann_json)
+        message(STATUS "VENDOR: linked nlohmann_json::nlohmann_json from vendor submodule")
+        target_link_libraries(${PROJECT_NAME}Lib PUBLIC nlohmann_json::nlohmann_json)
+    endif ()
+elseif (EXISTS "${VENDOR_DIR}/json/CMakeLists.txt")
+    # some copies may use json/ as folder name
+    message(STATUS "VENDOR: adding json subdirectory from ${VENDOR_DIR}/json")
+    add_subdirectory("${VENDOR_DIR}/json" "${CMAKE_CURRENT_BINARY_DIR}/vendor_json_build")
+    if (TARGET nlohmann_json::nlohmann_json)
+        message(STATUS "VENDOR: linked nlohmann_json::nlohmann_json from vendor submodule")
+        target_link_libraries(${PROJECT_NAME}Lib PUBLIC nlohmann_json::nlohmann_json)
+    endif ()
+else ()
+    # Expose include dirs if headers exist in vendor
+    if (EXISTS "${VENDOR_DIR}/nlohmann_json/include")
+        message(STATUS "VENDOR: exposing include dir ${VENDOR_DIR}/nlohmann_json/include for nlohmann/json headers")
+        target_include_directories(${PROJECT_NAME}Lib PUBLIC "${VENDOR_DIR}/nlohmann_json/include")
+    elseif (EXISTS "${VENDOR_DIR}/json/include")
+        message(STATUS "VENDOR: exposing include dir ${VENDOR_DIR}/json/include for nlohmann/json headers")
+        target_include_directories(${PROJECT_NAME}Lib PUBLIC "${VENDOR_DIR}/json/include")
+    elseif (EXISTS "${VENDOR_DIR}/json")
+        # generic fallback: expose folder
+        message(STATUS "VENDOR: exposing include dir ${VENDOR_DIR}/json for nlohmann/json headers")
+        target_include_directories(${PROJECT_NAME}Lib PUBLIC "${VENDOR_DIR}/json")
+    endif ()
+
+    # FetchContent fallback if allowed
+    if (ENGINE_ALLOW_FETCHCONTENT)
+        include(FetchContent)
+        message(STATUS "VENDOR: FetchContent will provide nlohmann/json")
+        FetchContent_Declare(
+                nlohmann_json
+                GIT_REPOSITORY https://github.com/nlohmann/json.git
+                GIT_TAG v3.11.2
+        )
+        FetchContent_MakeAvailable(nlohmann_json)
+        if (TARGET nlohmann_json::nlohmann_json)
+            message(STATUS "VENDOR: FetchContent provided nlohmann_json; linking nlohmann_json::nlohmann_json")
+            target_link_libraries(${PROJECT_NAME}Lib PUBLIC nlohmann_json::nlohmann_json)
+        endif ()
+    else ()
+        message(STATUS "VENDOR: nlohmann/json not found locally; set ENGINE_ALLOW_FETCHCONTENT=ON to fetch or place vendor/nlohmann_json locally")
+    endif ()
+endif ()
+
 # Expose GLEW includes to consumers of the engine library if available
 if (EXISTS "${VENDOR_DIR}/glew/include")
     target_include_directories(${PROJECT_NAME}Lib PUBLIC "${VENDOR_DIR}/glew/include")
@@ -336,4 +386,15 @@ if (DEFINED ASSETS_DIR AND EXISTS "${ASSETS_DIR}")
     )
 else ()
     message(STATUS "ASSETS_DIR not set or does not exist; skipping copy of assets for ${PROJECT_NAME}Lib")
+endif ()
+
+# If Tracy profiler was enabled at top-level, link it to the engine library and enable macro
+if (DEFINED _TRACY_AVAILABLE AND _TRACY_AVAILABLE)
+    if (TARGET TracyClient)
+        message(STATUS "ENGINE: Linking TracyClient into ${PROJECT_NAME}Lib and enabling TRACY_ENABLE")
+        target_link_libraries(${PROJECT_NAME}Lib PRIVATE TracyClient)
+        target_compile_definitions(${PROJECT_NAME}Lib PRIVATE TRACY_ENABLE)
+    else ()
+        message(WARNING "ENGINE: _TRACY_AVAILABLE set but target TracyClient not found. Ensure external/tracy provides TracyClient target.")
+    endif ()
 endif ()

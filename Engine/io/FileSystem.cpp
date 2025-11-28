@@ -1,6 +1,6 @@
-
 #include "FileSystem.hpp"
 #include "config.h"
+
 
 #if defined _WIN32
 #include <windows.h>
@@ -10,6 +10,9 @@
 #include <unistd.h>
 #include <limits.h>
 #endif
+
+#include <fstream>
+
 
 namespace LEN {
     std::filesystem::path FileSystem::GetExecutableFolder() const {
@@ -39,5 +42,30 @@ namespace LEN {
 
 #endif
         return std::filesystem::weakly_canonical(GetExecutableFolder() / "assets");
+    }
+
+    std::vector<char> FileSystem::LoadFile(const std::filesystem::path &path) const {
+        std::ifstream file(path, std::ios::binary | std::ios::ate);
+        if (!file.is_open()) {
+            return {};
+        }
+
+        auto size = file.tellg();
+        file.seekg(0);
+
+        std::vector<char> buffer(size);
+        if (!file.read(buffer.data(), size)) {
+            return {};
+        }
+        return buffer;
+    }
+
+    std::vector<char> FileSystem::LoadAssetFile(const std::string &relativePath) const {
+        return LoadFile(GetAssetsFolder() / relativePath);
+    }
+
+    std::string FileSystem::LoadAssetTextFile(const std::string &relativePath) {
+        auto buffer = LoadAssetFile(relativePath);
+        return std::string(buffer.begin(), buffer.end());
     }
 } // LEN

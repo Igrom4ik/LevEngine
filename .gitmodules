@@ -1,3 +1,6 @@
 [submodule "Engine/vendor/glfw"]
     path = Engine/vendor/glfw
     url = https://github.com/glfw/glfw.git
+[submodule "external/tracy"]
+	path = external/tracy
+	url = https://github.com/wolfpld/tracy.git

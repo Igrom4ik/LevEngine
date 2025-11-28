@@ -7,6 +7,10 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
+#if defined(TRACY_ENABLE)
+#include <tracy/Tracy.hpp>
+#endif
+
 
 namespace LEN {
     Engine::Engine() = default;
@@ -140,6 +144,9 @@ namespace LEN {
 
         m_lastTimePoint = std::chrono::high_resolution_clock::now();
         while (!glfwWindowShouldClose(m_window) && !m_application->NeedsToBeClose()) {
+#if defined(TRACY_ENABLE)
+            ZoneScoped; // profile whole frame
+#endif
             glfwPollEvents(); // Process window events
 
             auto now = std::chrono::high_resolution_clock::now();
@@ -172,6 +179,9 @@ namespace LEN {
             glfwSwapBuffers(m_window); // Swap front and back buffers
 
             m_inputManager.SetMousePositionOld(m_inputManager.GetMousePositionCurrent()); // Update old mouse position
+#if defined(TRACY_ENABLE)
+            FrameMark; // mark end of frame
+#endif
         }
     }
 

@@ -4,6 +4,10 @@
 #include "Core/render/Mesh.hpp"
 #include <iostream>
 
+#if defined(TRACY_ENABLE)
+#include <tracy/Tracy.hpp>
+#endif
+
 
 namespace LEN {
     bool GraphicsAPI::Init() {
@@ -111,6 +115,9 @@ namespace LEN {
     }
 
     void GraphicsAPI::DrawMesh(Mesh *mesh) {
+#if defined(TRACY_ENABLE)
+        ZoneScoped;
+#endif
         if (mesh) {
             mesh->Draw();
         }

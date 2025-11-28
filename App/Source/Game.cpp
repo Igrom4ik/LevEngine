@@ -2,24 +2,12 @@
 #include "TestObject.hpp"
 
 // Enable stb_image single-file implementation for this translation unit
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+
 #include <filesystem>
 
 bool Game::Init() {
 	auto &fs = LEN::Engine::GetInstance().GetFileSystem();
-	auto assetDir = fs.GetAssetsFolder();
-	auto path = assetDir / "brick.png";
-
-	int width = 0, height = 0, channels = 0;
-	unsigned char *data = stbi_load(path.string().c_str(), &width, &height, &channels, 0);
-
-	std::shared_ptr<LEN::Texture> texture;
-	if (data) {
-		texture = std::make_shared<LEN::Texture>(width, height, channels, data);
-
-		stbi_image_free(data);
-	}
+	auto texture = LEN::Texture::Load("brick.png");
 
 	m_scene = new LEN::Scene();
 
@@ -32,43 +20,9 @@ bool Game::Init() {
 
 	m_scene->CreateObject<TestObject>("TestObject");
 
-	// Restore simple colored cube mesh, shader and material
-	std::string vertexShaderSource = R"(
-        #version 330 core
-        layout (location = 0) in vec3 position;
-        layout (location = 1) in vec3 color;
-		layout (location = 2) in vec2 uv;
+	std::string vertexShaderSource = fs.LoadAssetTextFile("shaders/vertex.glsl");
+	std::string fragmentShaderSource = fs.LoadAssetTextFile("shaders/fragment.glsl");
 
-        out vec3 vColor;
-        out vec2 vUV;
-
-        uniform mat4 uModel;
-        uniform mat4 uView;
-        uniform mat4 uProjection;
-
-        void main()
-        {
-            vColor = color;
-			vUV = uv;
-            gl_Position = uProjection * uView * uModel * vec4(position, 1.0);
-        }
-    )";
-
-	std::string fragmentShaderSource = R"(
-        #version 330 core
-        out vec4 FragColor;
-
-        in vec3 vColor;
-        in vec2 vUV;
-
-		uniform sampler2D brickTexture;
-
-        void main()
-        {
-			vec4 texColor = texture(brickTexture, vUV);
-            FragColor = texColor * vec4(vColor, 1.0);
-        }
-    )";
 
 	auto &graphicAPI = LEN::Engine::GetInstance().GetGraphicsAPI();
 	auto shaderProgram = graphicAPI.CreateShaderProgram(vertexShaderSource, fragmentShaderSource);
