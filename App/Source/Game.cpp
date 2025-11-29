@@ -20,7 +20,8 @@ bool Game::Init() {
 
 	m_scene->CreateObject<TestObject>("TestObject");
 
-	auto material = LEN::Material::Load("materials/suzanne.mat");
+	auto cubeMaterial = LEN::Material::Load("materials/brick.mat");
+	auto suzanneMaterial = LEN::Material::Load("materials/suzanne.mat");
 
 	std::vector<float> vertices = {
 		// Front face (z = 0.5)
@@ -95,22 +96,21 @@ bool Game::Init() {
 	auto mesh = std::make_shared<LEN::Mesh>(vertexLayout, vertices, indices);
 
 	auto objectA = m_scene->CreateObject("ObjectA");
-	objectA->AddComponent(new LEN::MeshComponent(material, mesh));
+	objectA->AddComponent(new LEN::MeshComponent(cubeMaterial, mesh));
 	objectA->SetPosition(glm::vec3(1.0f, 0.0f, -5.0f));
 
 	auto objectB = m_scene->CreateObject("ObjectB");
-	objectB->AddComponent(new LEN::MeshComponent(material, mesh));
+	objectB->AddComponent(new LEN::MeshComponent(cubeMaterial, mesh));
 	objectB->SetPosition(glm::vec3(0.0f, 2.0f, 2.0f));
 	objectB->SetRotation(glm::vec3(0.0f, 2.0f, 0.0f));
 
 	auto objectC = m_scene->CreateObject("ObjectC");
-	objectC->AddComponent(new LEN::MeshComponent(material, mesh));
+	objectC->AddComponent(new LEN::MeshComponent(cubeMaterial, mesh));
 	objectC->SetPosition(glm::vec3(-2.0f, 0.0f, 0.0f));
 	objectC->SetRotation(glm::vec3(1.0f, 2.0f, 1.0f));
 	objectC->SetScale(glm::vec3(1.5f, 1.5f, 1.5f));
 
 	auto suzanneMesh = LEN::Mesh::Load("models/Suzanne.gltf");
-	auto suzanneMaterial = LEN::Material::Load("materials/suzanne.mat");
 
 	auto suzanneObject = m_scene->CreateObject("Suzanne");
 	suzanneObject->AddComponent(new LEN::MeshComponent(suzanneMaterial, suzanneMesh));
