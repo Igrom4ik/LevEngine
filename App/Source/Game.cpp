@@ -20,7 +20,7 @@ bool Game::Init() {
 
 	m_scene->CreateObject<TestObject>("TestObject");
 
-	auto material = LEN::Material::Load("materials/brick.mat");
+	auto material = LEN::Material::Load("materials/suzanne.mat");
 
 	std::vector<float> vertices = {
 		// Front face (z = 0.5)
@@ -96,7 +96,7 @@ bool Game::Init() {
 
 	auto objectA = m_scene->CreateObject("ObjectA");
 	objectA->AddComponent(new LEN::MeshComponent(material, mesh));
-	objectA->SetPosition(glm::vec3(0.0f, 2.0f, 0.0f));
+	objectA->SetPosition(glm::vec3(1.0f, 0.0f, -5.0f));
 
 	auto objectB = m_scene->CreateObject("ObjectB");
 	objectB->AddComponent(new LEN::MeshComponent(material, mesh));
@@ -108,6 +108,13 @@ bool Game::Init() {
 	objectC->SetPosition(glm::vec3(-2.0f, 0.0f, 0.0f));
 	objectC->SetRotation(glm::vec3(1.0f, 2.0f, 1.0f));
 	objectC->SetScale(glm::vec3(1.5f, 1.5f, 1.5f));
+
+	auto suzanneMesh = LEN::Mesh::Load("models/Suzanne.gltf");
+	auto suzanneMaterial = LEN::Material::Load("materials/suzanne.mat");
+
+	auto suzanneObject = m_scene->CreateObject("Suzanne");
+	suzanneObject->AddComponent(new LEN::MeshComponent(suzanneMaterial, suzanneMesh));
+	suzanneObject->SetPosition(glm::vec3(0.0f, 0.0f, -5.0f));
 
 	LEN::Engine::GetInstance().SetScene(m_scene);
 	return true;

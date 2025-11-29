@@ -9,8 +9,8 @@
         "textures":
         [
             {
-                "name": "brickTexture",
-                "path": "textures/brick.png"
+                "name": "baseColorTexture",
+                "path": "models/Suzanne_BaseColor.png"
             }
         ]
     }

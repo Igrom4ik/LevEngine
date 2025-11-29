@@ -54,7 +54,7 @@ set(ENGINE_SOURCES
         Source/Core/render/Material.hpp
         Source/Core/render/Mesh.cpp
         Source/Core/render/Mesh.hpp
-        Source/Core/render/VertexLayout.hpp
+        Source/Core/graphics/VertexLayout.hpp
         Source/Core/render/RenderQueue.cpp
         Source/Core/render/RenderQueue.hpp
         Source/Core/graphics/Colors.hpp
@@ -264,6 +264,17 @@ if (TARGET glfw)
     target_link_libraries(${PROJECT_NAME}Lib PUBLIC glfw)
 else ()
     message(STATUS "VENDOR: target 'glfw' not found; GLFW will not be linked")
+endif ()
+
+# --- cgltf: if available as a target, link it into the engine library; otherwise expose include dir if present
+if (TARGET cgltf)
+    message(STATUS "VENDOR: target 'cgltf' exists; linking to ${PROJECT_NAME}Lib")
+    target_link_libraries(${PROJECT_NAME}Lib PUBLIC cgltf)
+elseif (EXISTS "${VENDOR_DIR}/cgltf")
+    message(STATUS "VENDOR: vendor/cgltf found at ${VENDOR_DIR}/cgltf; exposing include dir")
+    target_include_directories(${PROJECT_NAME}Lib PUBLIC "${VENDOR_DIR}/cgltf")
+else ()
+    message(STATUS "VENDOR: cgltf not available as target and vendor/cgltf not present; skip linking cgltf")
 endif ()
 
 # Ensure system OpenGL is linked (on Windows this resolves opengl32.lib)

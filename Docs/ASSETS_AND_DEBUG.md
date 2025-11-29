@@ -11,6 +11,7 @@ abort) при запуске `LENApp.exe`.
 - Работа с JSON (парсер nlohmann::json): accept, BOM, исключения
 - Что делать при появлении диалога "abort() has been called" и как собрать стек
 - Быстрые решения и рекомендации
+- Подключение cgltf (tiny glTF loader)
 
 ---
 
@@ -149,8 +150,65 @@ Get-Content err.txt -Raw
 - Если вы хотите, чтобы я добавил простую цель CMake, которая копирует ассеты автоматически и только обновлённые файлы —
   скажите, и я подготовлю патч для `CMakeLists.txt`.
 
+## 9) Подключение cgltf (tiny glTF loader)
+
+LevEngine может использовать легковесную библиотеку cgltf (https://github.com/jkuhlmann/cgltf) для загрузки glTF
+моделей.
+Ниже — варианты подключения и пошаговые инструкции.
+
+Варианты подключения
+
+- Локальная копия: добавьте репозиторий cgltf в папку `external/cgltf` в корне проекта. Тогда CMake автоматически
+  подключит локальную копию.
+- Авто-загрузка (FetchContent): если вы не хотите хранить внешнюю зависимость в репозитории, можно включить опцию CMake
+  `ENGINE_ALLOW_FETCHCONTENT=ON`, тогда CMake при конфигурации скачает cgltf и создаст цель `cgltf`.
+
+Как включить (локально)
+
+1. Склонируйте cgltf рядом с проектом:
+
+```powershell
+# в корне репозитория
+git clone https://github.com/jkuhlmann/cgltf.git external/cgltf
+```
+
+2. Перегенерируйте сборку CMake:
+
+```powershell
+cmake -S . -B cmake-build-debug
+cmake --build cmake-build-debug --config Debug --target LENApp
+```
+
+Как включить (через FetchContent)
+
+1. Переключите опцию при конфигурации CMake:
+
+```powershell
+cmake -S . -B cmake-build-debug -DENGINE_ALLOW_FETCHCONTENT=ON
+cmake --build cmake-build-debug --config Debug --target LENApp
+```
+
+2. При включённой опции CMake загрузит архив cgltf и создаст статическую цель `cgltf`.
+
+Как использовать цель в коде (CMake)
+
+- В `Engine/CMakeLists.txt` или в соответствующем CMake-таргете добавьте зависимость к `cgltf`:
+
+```cmake
+target_link_libraries(LENLib PRIVATE cgltf)
+```
+
+- В коде включите заголовок `#include <cgltf.h>` и используйте API cgltf.
+
+Замечания и советы
+
+- Рекомендуется предпочесть локальную копию `external/cgltf` в репозитории команды для детерминированных сборок.
+  FetchContent полезен для быстрого теста или когда политика репозитория позволяет сетевой доступ во время конфигурации.
+- Если FetchContent отключён по умолчанию в вашей среде (часто в IDE/CI), используйте `-DENGINE_ALLOW_FETCHCONTENT=ON`
+  только если уверены в сетевых правах.
+- После добавления cgltf проверьте, что цель `cgltf` видна через `cmake --build` и что `Engine` корректно линкуется.
+
 ---
 
 Этот документ можно расширить: добавить CI-проверку ассетов, тест-утилиту `tools/json_check`, и шаблоны для логов. Если
 хотите — я внедрю одну из этих вещей автоматически.
-
