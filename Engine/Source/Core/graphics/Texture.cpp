@@ -1,4 +1,3 @@
-
 #include "Texture.hpp"
 #include "Core/Engine.hpp"
 
@@ -39,6 +38,26 @@ namespace LEN {
 
         auto &fs = Engine::GetInstance().GetFileSystem();
         auto fullPath = fs.GetAssetsFolder() / filePath;
+        if (!std::filesystem::exists(fullPath)) {
+            // Try fallback: assets/textures/<filePath>
+            try {
+                auto fallback = fs.GetAssetsFolder() / "textures" / std::filesystem::path(filePath).filename();
+                if (std::filesystem::exists(fallback)) {
+                    fullPath = fallback;
+                } else {
+                    // Also try inserting 'textures' before existing relative path (e.g., 'materials/..' -> 'materials/textures/...')
+                    auto p = std::filesystem::path(filePath);
+                    if (p.has_parent_path()) {
+                        auto inserted = fs.GetAssetsFolder() / p.parent_path() / "textures" / p.filename();
+                        if (std::filesystem::exists(inserted)) {
+                            fullPath = inserted;
+                        }
+                    }
+                }
+            } catch (...) {
+                // ignore filesystem errors, will report not found below
+            }
+        }
         if (!std::filesystem::exists(fullPath)) {
             std::cerr << "Texture::Load(): File not found: " << fullPath << std::endl;
             return nullptr;

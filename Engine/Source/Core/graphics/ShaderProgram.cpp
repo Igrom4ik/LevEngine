@@ -44,6 +44,13 @@ namespace LEN {
 		auto location = GetUniformLocation(name);
 
 		glActiveTexture(GL_TEXTURE0 + m_currentTextureUnit);
+		if (!texture) {
+			// If texture is null, bind 0 to keep GL state consistent and set uniform to current unit
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glUniform1i(location, m_currentTextureUnit);
+			++m_currentTextureUnit;
+			return;
+		}
 		glBindTexture(GL_TEXTURE_2D, texture->GetTextureID());
 		glUniform1i(location, m_currentTextureUnit);
 		++m_currentTextureUnit; // Move to the next texture unit

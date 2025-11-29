@@ -7,7 +7,7 @@
 
 bool Game::Init() {
 	auto &fs = LEN::Engine::GetInstance().GetFileSystem();
-	auto texture = LEN::Texture::Load("brick.png");
+	auto texture = LEN::Texture::Load("textures/brick.png");
 
 	m_scene = new LEN::Scene();
 
@@ -20,17 +20,7 @@ bool Game::Init() {
 
 	m_scene->CreateObject<TestObject>("TestObject");
 
-	std::string vertexShaderSource = fs.LoadAssetTextFile("shaders/vertex.glsl");
-	std::string fragmentShaderSource = fs.LoadAssetTextFile("shaders/fragment.glsl");
-
-
-	auto &graphicAPI = LEN::Engine::GetInstance().GetGraphicsAPI();
-	auto shaderProgram = graphicAPI.CreateShaderProgram(vertexShaderSource, fragmentShaderSource);
-
-
-	auto material = std::make_shared<LEN::Material>();
-	material->SetShaderProgram(shaderProgram);
-	material->SetParam("brickTexture", texture);
+	auto material = LEN::Material::Load("materials/brick.mat");
 
 	std::vector<float> vertices = {
 		// Front face (z = 0.5)

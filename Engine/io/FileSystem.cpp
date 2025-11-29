@@ -41,6 +41,32 @@ namespace LEN {
         }
 
 #endif
+        // Prefer executable-folder/assets if it exists
+        auto execAssets = std::filesystem::weakly_canonical(GetExecutableFolder() / "assets");
+        if (std::filesystem::exists(execAssets)) {
+            return execAssets;
+        }
+
+        // Fallback: search upward for App/assets or assets in parent directories (dev convenience)
+        auto cur = GetExecutableFolder();
+        for (int i = 0; i < 6; ++i) {
+            // Check for App/assets
+            auto candidate1 = std::filesystem::weakly_canonical(
+                cur / std::filesystem::path(std::string(i, '\\') + "../") / "App" / "assets");
+            (void) candidate1; // placeholder to avoid unused warning in some builds
+            try {
+                auto up = cur;
+                for (int j = 0; j <= i; ++j) up = up.parent_path();
+                auto p1 = std::filesystem::weakly_canonical(up / "App" / "assets");
+                if (std::filesystem::exists(p1)) return p1;
+                auto p2 = std::filesystem::weakly_canonical(up / "assets");
+                if (std::filesystem::exists(p2)) return p2;
+            } catch (...) {
+                // ignore and continue
+            }
+        }
+
+        // Default to executable-folder/assets even if it doesn't exist (previous behavior)
         return std::filesystem::weakly_canonical(GetExecutableFolder() / "assets");
     }
 
