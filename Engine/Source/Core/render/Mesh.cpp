@@ -82,15 +82,103 @@ namespace LEN {
 
 	void Mesh::Bind() {
 		glBindVertexArray(m_VAO);
+		std::cerr << "Mesh::Bind() VAO=" << m_VAO << " VBO=" << m_VBO << " EBO=" << m_EBO
+				<< " verts=" << m_vertexCount << " idx=" << m_indexCount << std::endl;
 	}
 
 	void Mesh::Draw() {
+		std::cerr << "Mesh::Draw() called. VAO=" << m_VAO << " idxCount=" << m_indexCount << " vertCount=" <<
+				m_vertexCount << std::endl;
 		if (m_indexCount > 0) {
 			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_indexCount), GL_UNSIGNED_INT, 0);
 		} else {
 			glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(m_vertexCount));
 		}
+		GLenum err = glGetError();
+		if (err != GL_NO_ERROR) {
+			std::cerr << "OpenGL error after draw: " << err << std::endl;
+		}
 	}
+
+	std::shared_ptr<Mesh> Mesh::CreateQube() {
+		std::vector<float> vertices = {
+			// Front face (z = 0.5)
+			0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+			-0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+			-0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+			0.5f, -0.5f, 0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+
+			// Top face (y = 0.5)
+			0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+			-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+			-0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+			0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+
+			// Right face (x = 0.5)
+			0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+			0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+			0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+			0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+
+			// Left face (x = -0.5)
+			-0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+			-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+			-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+			-0.5f, -0.5f, 0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+
+			// Bottom face (y = -0.5)
+			0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, -1.0f, 1.0f,
+			-0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, -1.0f, 1.0f,
+			-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f,
+			0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f, 1.0f,
+
+			// Back face (z = -0.5)
+			0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, -1.0f,
+			-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f,
+			-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+			0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f
+		};
+
+		std::vector<uint32_t> indices = {
+			// Front face
+			0, 1, 2,
+			0, 2, 3,
+			// Top face
+			4, 5, 6,
+			4, 6, 7,
+			// Right face
+			8, 9, 10,
+			8, 10, 11,
+			// Left face
+			12, 13, 14,
+			12, 14, 15,
+			// Back face
+			16, 17, 18,
+			16, 18, 19,
+			// Bottom face
+			20, 21, 22,
+			20, 22, 23
+		};
+
+		LEN::VertexLayout vertexLayout;
+		// Position attribute
+		vertexLayout.elements.push_back({VertexElement::PositionIndex, 3, GL_FLOAT, 0});
+		// Color attribute
+		vertexLayout.elements.push_back({VertexElement::ColorIndex, 3, GL_FLOAT, sizeof(float) * 3});
+		// UV
+		vertexLayout.elements.push_back({VertexElement::UVIndex, 2, GL_FLOAT, sizeof(float) * 6});
+
+		// Normal attribute
+		vertexLayout.elements.push_back({VertexElement::NormalIndex, 2, GL_FLOAT, sizeof(float) * 8});
+
+		// Stride: total size of one vertex (position + color)
+		vertexLayout.stride = sizeof(float) * 11;
+
+		auto result = std::make_shared<LEN::Mesh>(vertexLayout, vertices, indices);
+
+		return result;
+	}
+
 
 	std::shared_ptr<Mesh> Mesh::Load(const std::string &path) {
 		auto contents = Engine::GetInstance().GetFileSystem().LoadAssetFile(path);
@@ -135,7 +223,7 @@ namespace LEN {
 				}
 
 				VertexLayout vertexLayout;
-				cgltf_accessor *accessors[3] = {nullptr, nullptr, nullptr}; // position, normal, uv
+				cgltf_accessor *accessors[4] = {nullptr, nullptr, nullptr}; // position, normal, uv
 				for (cgltf_size ai = 0; ai < primitive.attributes_count; ++ai) {
 					auto &attr = primitive.attributes[ai];
 					auto acc = attr.data;
@@ -168,6 +256,12 @@ namespace LEN {
 							accessors[VertexElement::UVIndex] = acc;
 							element.index = VertexElement::UVIndex;
 							element.size = 2;
+						}
+						break;
+						case cgltf_attribute_type_normal: {
+							accessors[VertexElement::NormalIndex] = acc;
+							element.index = VertexElement::NormalIndex;
+							element.size = 3;
 						}
 						break;
 						default:

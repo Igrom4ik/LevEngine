@@ -13,6 +13,7 @@ namespace LEN {
 		static constexpr int PositionIndex = 0; // Attribute location for position
 		static constexpr int ColorIndex = 1; // Attribute location for color
 		static constexpr int UVIndex = 2; // Attribute location for texture coordinates
+		static constexpr int NormalIndex = 3; // Attribute location for normals
 	};
 
 	struct VertexLayout {

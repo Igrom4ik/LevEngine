@@ -19,6 +19,8 @@ namespace LEN {
 
 		void Draw();
 
+		static std::shared_ptr<Mesh> CreateQube();
+
 		static std::shared_ptr<Mesh> Load(const std::string &path);
 
 	private:

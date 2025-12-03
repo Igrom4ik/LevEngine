@@ -159,6 +159,7 @@ namespace LEN {
             m_graphicsAPI.ClearBuffers();
 
             CameraData cameraData{};
+            std::vector<LightData> lights;
 
             int width(0), height(0);
             glfwGetWindowSize(m_window, &width, &height);
@@ -173,8 +174,10 @@ namespace LEN {
                         cameraData.projectionMatrix = cameraComponent->GetProjectionMatrix(aspectRatio);
                     }
                 }
+
+                lights = m_currentScene->CollectLights();
             }
-            m_renderQueue.Draw(m_graphicsAPI, cameraData);
+            m_renderQueue.Draw(m_graphicsAPI, cameraData, lights);
 
             glfwSwapBuffers(m_window); // Swap front and back buffers
 

@@ -38,6 +38,8 @@ namespace LEN {
 		// Use glm::vec3 for positions/rotations/scales (float vectors)
 		const glm::vec3 &GetPosition() const;
 
+		glm::vec3 GetWorldPosition() const;
+
 		void SetPosition(const glm::vec3 &pos);
 
 		const glm::quat &GetRotation() const;

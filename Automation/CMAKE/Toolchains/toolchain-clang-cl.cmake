@@ -1,7 +1,10 @@
 # Toolchain for Clang-CL (LLVM with MSVC environment)
 # Use with Ninja generator. Ensure MSVC environment is set (vcvarsall) before configuring.
 
-set(CMAKE_SYSTEM_NAME Windows)
+# Avoid forcing CMAKE_SYSTEM_NAME here — setting it causes CMake to treat this as a
+# cross-compilation toolchain which prevents probing the host C++ compiler fully.
+# If you are cross-compiling, set CMAKE_SYSTEM_NAME externally; otherwise rely on
+# CMake defaults for native Windows builds.
 
 # Find clang-cl compiler if not explicitly set
 if (NOT CMAKE_C_COMPILER OR NOT CMAKE_CXX_COMPILER)
@@ -21,13 +24,15 @@ if (NOT CMAKE_C_COMPILER OR NOT CMAKE_CXX_COMPILER)
             "$ENV{ProgramFiles}/Microsoft Visual Studio/2022/Enterprise/VC/Tools/Llvm/x64/bin"
             "$ENV{ProgramFiles}/Microsoft Visual Studio/2022/BuildTools/VC/Tools/Llvm/x64/bin"
 
-            # Visual Studio 2019 installations (fallback)
-            "$ENV{ProgramFiles\(x86\)}/Microsoft Visual Studio/2019/Community/VC/Tools/Llvm/x64/bin"
-            "$ENV{ProgramFiles\(x86\)}/Microsoft Visual Studio/2019/Professional/VC/Tools/Llvm/x64/bin"
-            "$ENV{ProgramFiles\(x86\)}/Microsoft Visual Studio/2019/Enterprise/VC/Tools/Llvm/x64/bin"
+
+            # Visual Studio 2026 installations (fallback)
+            "$ENV{ProgramFiles}/Microsoft Visual Studio/18/Community/VC/Tools/Llvm/x64/bin"
+            "$ENV{ProgramFiles}/Microsoft Visual Studio/18/Professional/VC/Tools/Llvm/x64/bin"
+            "$ENV{ProgramFiles}/Microsoft Visual Studio/18/Enterprise/VC/Tools/Llvm/x64/bin"
             DOC "Path to clang-cl compiler"
             NO_DEFAULT_PATH
     )
+
 
     # Also try system PATH
     if (NOT CLANG_CL_EXECUTABLE)
@@ -53,11 +58,10 @@ if (NOT CMAKE_C_COMPILER OR NOT CMAKE_CXX_COMPILER)
 endif ()
 
 # Tell CMake not to second-guess the compiler id
-set(CMAKE_C_COMPILER_ID_RUN TRUE)
-set(CMAKE_CXX_COMPILER_ID_RUN TRUE)
+# (removed previous CMAKE_C_COMPILER_ID_RUN / CMAKE_CXX_COMPILER_ID_RUN to allow CMake to probe the
+# compilers and set CMAKE_CXX_COMPILER_ID / CMAKE_C_COMPILER_ID correctly)
 
 # Runtime library selection via MSVC-style property
 if (NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif ()
-

@@ -39,6 +39,7 @@ configure_file(
 set(ENGINE_SOURCES
         Source/Core/Engine.cpp
         Source/Core/Engine.hpp
+        Source/Core/Common.hpp
         Source/Core/Application.cpp
         Source/Core/Application.hpp
         Source/Core/input/InputManager.hpp
@@ -70,6 +71,8 @@ set(ENGINE_SOURCES
         Source/Core/scene/components/CameraComponent.hpp
         Source/Core/scene/components/PlayerControllerComponent.cpp
         Source/Core/scene/components/PlayerControllerComponent.hpp
+        Source/Core/scene/components/LightComponent.cpp
+        Source/Core/scene/components/LightComponent.hpp
         io/FileSystem.cpp
 )
 

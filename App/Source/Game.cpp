@@ -5,6 +5,8 @@
 
 #include <filesystem>
 
+#include "Core/scene/components/LightComponent.hpp"
+
 bool Game::Init() {
 	auto &fs = LEN::Engine::GetInstance().GetFileSystem();
 	auto texture = LEN::Texture::Load("textures/brick.png");
@@ -23,77 +25,7 @@ bool Game::Init() {
 	auto cubeMaterial = LEN::Material::Load("materials/brick.mat");
 	auto suzanneMaterial = LEN::Material::Load("materials/suzanne.mat");
 
-	std::vector<float> vertices = {
-		// Front face (z = 0.5)
-		0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-		-0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-		0.5f, -0.5f, 0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-
-		// Top face (y = 0.5)
-		0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-		-0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-		0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-
-		// Right face (x = 0.5)
-		0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-		0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-		0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-		0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-
-		// Left face (x = -0.5)
-		-0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-		-0.5f, -0.5f, 0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-
-		// Bottom face (y = -0.5)
-		0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-		-0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-		0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-
-		// Back face (z = -0.5)
-		0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-		0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f
-	};
-
-	std::vector<uint32_t> indices = {
-		// Front face
-		0, 1, 2,
-		0, 2, 3,
-		// Top face
-		4, 5, 6,
-		4, 6, 7,
-		// Right face
-		8, 9, 10,
-		8, 10, 11,
-		// Left face
-		12, 13, 14,
-		12, 14, 15,
-		// Back face
-		16, 17, 18,
-		16, 18, 19,
-		// Bottom face
-		20, 21, 22,
-		20, 22, 23
-	};
-
-	LEN::VertexLayout vertexLayout;
-	// Position attribute
-	vertexLayout.elements.push_back({0, 3, GL_FLOAT, 0});
-	// Color attribute
-	vertexLayout.elements.push_back({1, 3, GL_FLOAT, sizeof(float) * 3});
-	// UV
-	vertexLayout.elements.push_back({2, 2, GL_FLOAT, sizeof(float) * 6});
-
-	// Stride: total size of one vertex (position + color)
-	vertexLayout.stride = sizeof(float) * 8;
-
-	auto mesh = std::make_shared<LEN::Mesh>(vertexLayout, vertices, indices);
+	auto mesh = LEN::Mesh::CreateQube();
 
 	auto objectA = m_scene->CreateObject("ObjectA");
 	objectA->AddComponent(new LEN::MeshComponent(cubeMaterial, mesh));
@@ -115,6 +47,12 @@ bool Game::Init() {
 	auto suzanneObject = m_scene->CreateObject("Suzanne");
 	suzanneObject->AddComponent(new LEN::MeshComponent(suzanneMaterial, suzanneMesh));
 	suzanneObject->SetPosition(glm::vec3(0.0f, 0.0f, -5.0f));
+
+	auto light = m_scene->CreateObject("Light");
+	auto lightComp = new LEN::LightComponent;
+	lightComp->setColor(glm::vec3(1.0f));
+	light->AddComponent(lightComp);
+	light->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
 
 	LEN::Engine::GetInstance().SetScene(m_scene);
 	return true;

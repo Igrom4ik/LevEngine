@@ -4,6 +4,7 @@
 #include "Core/graphics/ShaderProgram.hpp"
 #include "Core/graphics/Texture.hpp"
 #include <nlohmann/json.hpp>
+#include <iostream>
 
 namespace LEN {
 	LEN::ShaderProgram *Material::GetShaderProgram() {
@@ -31,6 +32,11 @@ namespace LEN {
 			return;
 		}
 		m_shaderProgram->Bind();
+
+		// Debug: log shader program validity and whether uModel uniform exists
+		GLint modelLoc = m_shaderProgram->GetUniformLocation("uModel");
+		std::cerr << "Material::Bind() -> shader program: " << (m_shaderProgram ? "valid" : "null")
+				<< " uModel_loc=" << modelLoc << std::endl;
 
 		for (const auto &praram: m_floatParams) {
 			m_shaderProgram->SetUniform(praram.first, praram.second); // Set float uniform
