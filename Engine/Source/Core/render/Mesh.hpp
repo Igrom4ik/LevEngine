@@ -21,7 +21,12 @@ namespace LEN {
 
 		static std::shared_ptr<Mesh> CreateQube();
 
-		static std::shared_ptr<Mesh> Load(const std::string &path);
+		//static std::shared_ptr<Mesh> Load(const std::string &path);
+		bool IsGPUReady() const;
+
+		GLuint GetVAO() const { return m_VAO; }
+		GLuint GetVBO() const { return m_VBO; }
+		GLuint GetEBO() const { return m_EBO; }
 
 	private:
 		VertexLayout m_vertexLayout;

@@ -19,5 +19,9 @@ namespace LEN {
 	struct VertexLayout {
 		std::vector<VertexElement> elements;
 		uint32_t stride = 0; // Total size of a single vertex in bytes
+
+		bool IsValid() const {
+			return stride > 0 && !elements.empty();
+		}
 	};
 }

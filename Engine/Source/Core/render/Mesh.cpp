@@ -2,9 +2,7 @@
 #include "Core/graphics/GraphicsAPI.hpp"
 #include "Core/Engine.hpp"
 #include <GL/glew.h>
-
-#define CGLTF_IMPLEMENTATION
-#include <cgltf.h>
+#include <stdexcept>
 
 
 namespace LEN {
@@ -25,7 +23,7 @@ namespace LEN {
 		for (auto &element: m_vertexLayout.elements) {
 			glVertexAttribPointer(
 				element.index,
-				element.size,
+				static_cast<GLint>(element.size),
 				element.type,
 				GL_FALSE,
 				static_cast<GLsizei>(m_vertexLayout.stride),
@@ -34,12 +32,21 @@ namespace LEN {
 			glEnableVertexAttribArray(element.index);
 		}
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
+		// Bind element array buffer while VAO is bound so EBO becomes part of VAO state
+		if (m_EBO != 0) {
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
+		}
+
+		if (m_vertexLayout.stride == 0) {
+			std::cerr << "Mesh::Mesh(): vertex layout stride is 0 — invalid mesh layout" << std::endl;
+			throw std::runtime_error("Invalid vertex layout stride");
+		}
 
 		// Set 0 for Buffer's
 		glBindVertexArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		// Do not unbind GL_ELEMENT_ARRAY_BUFFER here — element buffer binding is part of VAO state
 
 		// vertices.size() returns number of floats; m_vertexLayout.stride is in bytes.
 		// Convert float count to bytes before dividing by stride to get vertex count.
@@ -63,7 +70,7 @@ namespace LEN {
 		for (auto &element: m_vertexLayout.elements) {
 			glVertexAttribPointer(
 				element.index,
-				element.size,
+				static_cast<GLint>(element.size),
 				element.type,
 				GL_FALSE,
 				static_cast<GLsizei>(m_vertexLayout.stride),
@@ -80,18 +87,65 @@ namespace LEN {
 		m_vertexCount = (vertices.size() * sizeof(float)) / static_cast<size_t>(m_vertexLayout.stride);
 	}
 
+	bool Mesh::IsGPUReady() const {
+		// GPU ready if VAO and VBO exist (non-zero). EBO may be zero for non-indexed meshes.
+		return m_VAO != 0 && m_VBO != 0;
+	}
+
 	void Mesh::Bind() {
+		if (!IsGPUReady()) {
+			std::cerr << "Mesh::Bind(): Attempt to bind mesh with uninitialized GPU resources - VAO=" << m_VAO <<
+					" VBO=" << m_VBO << " EBO=" << m_EBO << std::endl;
+			return;
+		}
 		glBindVertexArray(m_VAO);
 		std::cerr << "Mesh::Bind() VAO=" << m_VAO << " VBO=" << m_VBO << " EBO=" << m_EBO
 				<< " verts=" << m_vertexCount << " idx=" << m_indexCount << std::endl;
 	}
 
 	void Mesh::Draw() {
+		if (!IsGPUReady()) {
+			std::cerr << "Mesh::Draw(): Attempt to draw mesh with uninitialized GPU resources - VAO=" << m_VAO <<
+					" VBO=" << m_VBO << " EBO=" << m_EBO << std::endl;
+			return;
+		}
+
+		// Clear previous GL errors
+		while (glGetError() != GL_NO_ERROR) {
+		}
+
+		// Validate OpenGL objects at runtime (driver may have invalidated them)
+		GLboolean vaoOk = glIsVertexArray(m_VAO);
+		GLboolean vboOk = glIsBuffer(m_VBO);
+		GLboolean eboOk = m_EBO == 0 ? GL_TRUE : glIsBuffer(m_EBO);
+		std::cerr << "Mesh::Draw() validation: vaoOk=" << vaoOk << " vboOk=" << vboOk << " eboOk=" << eboOk << " (VAO="
+				<< m_VAO << ", VBO=" << m_VBO << ", EBO=" << m_EBO << ")" << std::endl;
+		if (!vaoOk || !vboOk || !eboOk) {
+			std::cerr << "Mesh::Draw(): OpenGL objects invalid - skipping draw" << std::endl;
+			return;
+		}
+
 		std::cerr << "Mesh::Draw() called. VAO=" << m_VAO << " idxCount=" << m_indexCount << " vertCount=" <<
 				m_vertexCount << std::endl;
 		if (m_indexCount > 0) {
+			glBindVertexArray(m_VAO);
+			if (m_EBO != 0) {
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
+			}
+			// final safety: ensure no GL error before draw
+			GLenum pre = glGetError();
+			if (pre != GL_NO_ERROR) {
+				std::cerr << "Mesh::Draw(): pre-draw GL error: " << pre << std::endl;
+				return;
+			}
 			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(m_indexCount), GL_UNSIGNED_INT, 0);
 		} else {
+			glBindVertexArray(m_VAO);
+			GLenum pre = glGetError();
+			if (pre != GL_NO_ERROR) {
+				std::cerr << "Mesh::Draw(): pre-draw GL error: " << pre << std::endl;
+				return;
+			}
 			glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(m_vertexCount));
 		}
 		GLenum err = glGetError();
@@ -161,25 +215,42 @@ namespace LEN {
 		};
 
 		LEN::VertexLayout vertexLayout;
-		// Position attribute
-		vertexLayout.elements.push_back({VertexElement::PositionIndex, 3, GL_FLOAT, 0});
-		// Color attribute
-		vertexLayout.elements.push_back({VertexElement::ColorIndex, 3, GL_FLOAT, sizeof(float) * 3});
-		// UV
-		vertexLayout.elements.push_back({VertexElement::UVIndex, 2, GL_FLOAT, sizeof(float) * 6});
+		// Build vertex layout programmatically to ensure offsets and stride are consistent
+		{
+			VertexElement el;
+			el.type = GL_FLOAT;
 
-		// Normal attribute
-		vertexLayout.elements.push_back({VertexElement::NormalIndex, 2, GL_FLOAT, sizeof(float) * 8});
+			el.index = VertexElement::PositionIndex;
+			el.size = 3; // x,y,z
+			el.offset = vertexLayout.stride;
+			vertexLayout.stride += el.size * sizeof(float);
+			vertexLayout.elements.push_back(el);
 
-		// Stride: total size of one vertex (position + color)
-		vertexLayout.stride = sizeof(float) * 11;
+			el.index = VertexElement::ColorIndex;
+			el.size = 3; // r,g,b
+			el.offset = vertexLayout.stride;
+			vertexLayout.stride += el.size * sizeof(float);
+			vertexLayout.elements.push_back(el);
+
+			el.index = VertexElement::UVIndex;
+			el.size = 2; // u,v
+			el.offset = vertexLayout.stride;
+			vertexLayout.stride += el.size * sizeof(float);
+			vertexLayout.elements.push_back(el);
+
+			el.index = VertexElement::NormalIndex;
+			el.size = 3; // normal x,y,z (was incorrectly 2)
+			el.offset = vertexLayout.stride;
+			vertexLayout.stride += el.size * sizeof(float);
+			vertexLayout.elements.push_back(el);
+		}
 
 		auto result = std::make_shared<LEN::Mesh>(vertexLayout, vertices, indices);
 
 		return result;
 	}
 
-
+#if 0
 	std::shared_ptr<Mesh> Mesh::Load(const std::string &path) {
 		auto contents = Engine::GetInstance().GetFileSystem().LoadAssetFile(path);
 		if (contents.empty()) {
@@ -224,6 +295,7 @@ namespace LEN {
 
 				VertexLayout vertexLayout;
 				cgltf_accessor *accessors[4] = {nullptr, nullptr, nullptr}; // position, normal, uv
+
 				for (cgltf_size ai = 0; ai < primitive.attributes_count; ++ai) {
 					auto &attr = primitive.attributes[ai];
 					auto acc = attr.data;
@@ -273,6 +345,7 @@ namespace LEN {
 						vertexLayout.elements.push_back(element);
 					}
 				}
+
 				if (!accessors[VertexElement::PositionIndex]) {
 					continue; // position is required
 				}
@@ -315,4 +388,5 @@ namespace LEN {
 
 		return result;
 	}
-}
+#endif // 0
+} // namespace LEN

@@ -95,6 +95,13 @@ TestObject::TestObject() {
 	vertexLayout.elements.push_back({1, 3, GL_FLOAT, sizeof(float) * 3});
 	vertexLayout.stride = sizeof(float) * 6; // 3 for position + 3 for color
 
+	// Debug: проверка валидности перед созданием Mesh
+	if (!vertexLayout.IsValid()) {
+		std::cerr << "TestObject: invalid vertex layout: stride=" << vertexLayout.stride << " elements=" << vertexLayout
+				.elements.size() << std::endl;
+		throw std::runtime_error("Invalid vertex layout in TestObject");
+	}
+
 	// Create Mesh
 	auto mesh = std::make_shared<LEN::Mesh>(vertexLayout, vertices, indices);
 
@@ -123,4 +130,3 @@ void TestObject::Update(float deltaTime) {
 	SetPosition(position);
 #endif
 }
-

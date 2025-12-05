@@ -21,17 +21,12 @@ namespace LEN {
 
 		template<typename T, typename = typename std::enable_if_t<std::is_base_of_v<GameObject, T> > >
 		T *CreateObject(const std::string &name, GameObject *parent = nullptr) {
-			auto obj = std::make_unique<T>();
+			auto obj = new T();
 			obj->SetName(name);
-			GameObject *raw = obj.get();
-			if (parent) {
-				parent->m_children.push_back(std::move(obj));
-				raw->m_parent = parent;
-			} else {
-				m_objects.push_back(std::move(obj));
-				raw->m_parent = nullptr;
-			}
-			return static_cast<T *>(raw);
+			SetParent(obj, parent);
+			obj->m_scene = this;
+
+			return obj;
 		}
 
 		bool SetParent(GameObject *obj, GameObject *parent);

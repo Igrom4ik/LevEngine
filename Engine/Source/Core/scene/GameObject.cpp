@@ -1,7 +1,22 @@
 #include "Core/scene/GameObject.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/constants.hpp>
+#include "Core/Engine.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include "Source/Core/graphics/VertexLayout.hpp"
+#include "Core/render/Material.hpp"
+#include "Core/render/Mesh.hpp"
+#include "Core/scene/components/MeshComponent.hpp"
+#include "Core/graphics/Texture.hpp"
+
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/matrix_decompose.hpp>
+
+#define CGLTF_IMPLEMENTATION
+#include <cglTF.h>
+
 
 namespace LEN {
 	void GameObject::Update(float deltaTime) {
@@ -29,6 +44,17 @@ namespace LEN {
 
 	GameObject *GameObject::GetParent() {
 		return m_parent;
+	}
+
+	bool GameObject::SetParent(GameObject *parent) {
+		if (!m_scene) {
+			return false;
+		}
+		return m_scene->SetParent(this, parent);
+	}
+
+	Scene *GameObject::GetScene() {
+		return m_scene;
 	}
 
 	bool GameObject::IsAlive() const {
@@ -96,5 +122,201 @@ namespace LEN {
 		}
 		// else не нужен — если выше был return, эта строка будет достигнута только когда if не выполнится
 		return GetLocalTransform();
+	}
+
+	void ParseGLTFNode(cgltf_node *node, GameObject *parent, const std::filesystem::path &folder) {
+		if (!node || !parent) return;
+
+		// Create object in the current scene and attach to parent
+		std::string nodeName = node->name ? node->name : "Node";
+		auto object = Engine::GetInstance().GetCurrentScene()->CreateObject(nodeName, parent);
+
+		// Transform
+		if (node->has_matrix) {
+			auto mat = glm::make_mat4(node->matrix);
+			glm::vec3 translation, scale, skew;
+			glm::vec4 perspective;
+			glm::quat rotation;
+			glm::decompose(mat, scale, rotation, translation, skew, perspective);
+
+			object->SetPosition(translation);
+			object->SetRotation(rotation);
+			object->SetScale(scale);
+		} else {
+			if (node->has_translation) {
+				object->SetPosition(glm::vec3(node->translation[0], node->translation[1], node->translation[2]));
+			}
+			if (node->has_rotation) {
+				object->SetRotation(glm::quat(node->rotation[3], node->rotation[0], node->rotation[1],
+				                              node->rotation[2]));
+			}
+			if (node->has_scale) {
+				object->SetScale(glm::vec3(node->scale[0], node->scale[1], node->scale[2]));
+			}
+		}
+
+		// Mesh / primitives
+		if (node->mesh) {
+			for (cgltf_size pi = 0; pi < node->mesh->primitives_count; ++pi) {
+				auto &primitive = node->mesh->primitives[pi];
+				if (primitive.type != cgltf_primitive_type_triangles) continue;
+
+				// helpers
+				auto readFloats = [](const cgltf_accessor *acc, cgltf_size i, float *out, int n) {
+					std::fill(out, out + n, 0.0f);
+					return cgltf_accessor_read_float(acc, i, out, n) == cgltf_result_success;
+				};
+				auto readIndex = [](const cgltf_accessor *acc, cgltf_size i) -> uint32_t {
+					cgltf_uint out = 0;
+					cgltf_bool ok = cgltf_accessor_read_uint(acc, i, &out, 1);
+					return ok ? static_cast<uint32_t>(out) : 0u;
+				};
+
+				VertexLayout vertexLayout;
+				cgltf_accessor *accessors[4] = {nullptr, nullptr, nullptr, nullptr};
+
+				// build layout from attributes
+				for (cgltf_size ai = 0; ai < primitive.attributes_count; ++ai) {
+					auto &attr = primitive.attributes[ai];
+					auto acc = attr.data;
+					if (!acc) continue;
+					VertexElement element;
+					element.size = 0;
+					element.type = GL_FLOAT;
+
+					switch (attr.type) {
+						case cgltf_attribute_type_position:
+							accessors[VertexElement::PositionIndex] = acc;
+							element.index = VertexElement::PositionIndex;
+							element.size = 3;
+							break;
+						case cgltf_attribute_type_color:
+							if (attr.index != 0) break;
+							accessors[VertexElement::ColorIndex] = acc;
+							element.index = VertexElement::ColorIndex;
+							element.size = 3;
+							break;
+						case cgltf_attribute_type_texcoord:
+							if (attr.index != 0) break;
+							accessors[VertexElement::UVIndex] = acc;
+							element.index = VertexElement::UVIndex;
+							element.size = 2;
+							break;
+						case cgltf_attribute_type_normal:
+							accessors[VertexElement::NormalIndex] = acc;
+							element.index = VertexElement::NormalIndex;
+							element.size = 3;
+							break;
+						default: break;
+					}
+					if (element.size > 0) {
+						element.offset = vertexLayout.stride;
+						vertexLayout.stride += element.size * sizeof(float);
+						vertexLayout.elements.push_back(element);
+					}
+				}
+
+				if (!accessors[VertexElement::PositionIndex]) continue; // need positions
+				auto vertexCount = accessors[VertexElement::PositionIndex]->count;
+
+				std::vector<float> vertices((vertexLayout.stride / sizeof(float)) * vertexCount);
+
+				for (cgltf_size vi = 0; vi < vertexCount; ++vi) {
+					for (auto &el: vertexLayout.elements) {
+						if (!accessors[el.index]) continue;
+						auto idx = (vi * vertexLayout.stride + el.offset) / sizeof(float);
+						readFloats(accessors[el.index], vi, &vertices[idx], el.size);
+					}
+				}
+
+				std::vector<uint32_t> indices;
+				if (primitive.indices) {
+					auto indexCount = primitive.indices->count;
+					indices.resize(indexCount);
+					for (cgltf_size ii = 0; ii < indexCount; ++ii) indices[ii] = readIndex(primitive.indices, ii);
+				}
+
+				// Validate vertexLayout before creating Mesh
+				if (!vertexLayout.IsValid()) {
+					std::cerr << "ParseGLTFNode: invalid vertex layout for node '" << (
+								node->name ? node->name : "<unnamed>") << "' - stride=" << vertexLayout.stride <<
+							" elements="
+							<< vertexLayout.elements.size() << std::endl;
+					continue; // skip this primitive
+				}
+
+				auto mesh = std::make_shared<Mesh>(vertexLayout, vertices, indices);
+				auto mat = std::make_shared<Material>();
+				mat->SetShaderProgram(Engine::GetInstance().GetGraphicsAPI().GetDefaultShaderProgram());
+
+				// material (base color texture)
+				if (primitive.material) {
+					auto gltfMat = primitive.material;
+					if (gltfMat->has_pbr_metallic_roughness) {
+						auto pbr = gltfMat->pbr_metallic_roughness;
+						auto texture = pbr.base_color_texture.texture; // cgltf_texture*
+						if (texture && texture->image) {
+							if (texture->image->uri) {
+								auto path = folder / std::string(texture->image->uri);
+								auto tex = Texture::Load(path.string());
+								mat->SetParam("baseColorTexture", tex);
+							}
+						}
+					} else if (gltfMat->has_pbr_specular_glossiness) {
+						auto pbr = gltfMat->pbr_specular_glossiness;
+						auto texture = pbr.diffuse_texture.texture;
+						if (texture && texture->image) {
+							if (texture->image->uri) {
+								auto path = folder / std::string(texture->image->uri);
+								auto tex = Texture::Load(path.string());
+								mat->SetParam("baseColorTexture", tex);
+							}
+						}
+					}
+					object->AddComponent(new MeshComponent(mat, mesh));
+				}
+			}
+		}
+
+		for (cgltf_size ci = 0; ci < node->children_count; ++ci) {
+			ParseGLTFNode(node->children[ci], object, folder);
+		}
+	}
+
+
+	GameObject *GameObject::LoadGLTF(const std::string &path) {
+		auto contents = Engine::GetInstance().GetFileSystem().LoadAssetTextFile(path);
+		if (contents.empty()) {
+			return nullptr;
+		}
+		cgltf_options options = {};
+		cgltf_data *data = nullptr;
+
+		cgltf_result res = cgltf_parse(&options, contents.data(), contents.size(), &data);
+		if (res != cgltf_result_success) {
+			return nullptr;
+		}
+
+		auto fullPath = Engine::GetInstance().GetFileSystem().GetAssetsFolder() / path;
+		auto fullFolderPat = fullPath.remove_filename();
+		auto relativeFolderPath = std::filesystem::path(path).remove_filename();
+
+		res = cgltf_load_buffers(&options, data, fullFolderPat.string().c_str());
+		if (res != cgltf_result_success) {
+			cgltf_free(data);
+			return nullptr;
+		}
+
+		auto resultObject = Engine::GetInstance().GetCurrentScene()->CreateObject("Result");
+		auto &scene = data->scenes[0];
+
+		for (cgltf_size i = 0; i < scene.nodes_count; ++i) {
+			auto node = scene.nodes[i];
+			ParseGLTFNode(node, resultObject, relativeFolderPath);
+		}
+
+		cgltf_free(data);
+
+		return resultObject;
 	}
 } // namespace LEN
